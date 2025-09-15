@@ -7,10 +7,8 @@
 ### Load necessary libraries
 
 library(io)
-library(precrec)
-library(jsonlite)
-library(argparser)
-library(tidyverse)
+library(ggplot2)
+library(dplyr)
 library(glue)
 library(patchwork)
 library(grid)
@@ -18,43 +16,107 @@ library(hrbrthemes)
 library(viridis)
 
 ### Plotting
-#### Create a full plot including the ROC & PRC plots, the AUC text panel and the necessary captions/labels
-make.roc.prc.plot <- function(roc.plot, prc.plot, auc_grob, snv_count = NULL, title = NULL, subtitle = NULL, caption = NULL) {
+
+# Function to check if the roc and prc coordinate table is from the same sample and returns sample name if they match
+# @param roc_path (string) | path to roc coordinates table
+# @param prc_path (string) | path to prc coordinates table
+# @param roc_suffix (string) | default: "_all-models_roc_coordinates.tsv" | roc coordinates table suffix after sample name
+# @param prc_suffix (string) | default: "_all-models_roc_coordinates.tsv" | prc coordinates table suffix after sample name
+# @return boolean
+match_return_sample_name <- function(roc_path, prc_path, roc_suffix = "_all-models_roc_coordinates.tsv", prc_suffix = "_all-models_roc_coordinates.tsv"){
+
+	sample_name_roc <- gsub(roc_suffix, "", basename(roc_path))
+	sample_name_prc <- gsub(prc_suffix, "", basename(roc_path))
 	
-	roc.plot <- roc.plot + ggtitle("ROC")
-	prc.plot <- prc.plot + ggtitle("PRC")
-
-	if (!is.null(title)) {
-		title <- title
+	if (sample_name_roc != sample_name_prc) {
+		stop(paste("Mismatch found at index", i, ": ROC sample '", 
+			sample_name_roc, "' does not match PRC sample '", 
+			sample_name_prc, "'. Halting execution.", sep=""))
 	}
 
-	if (!is.null(subtitle)) {
-		subtitle <- subtitle
-	}
+	sample_name_roc
+}
 
-	# Compose caption if SNV count is present
-	if (!is.null(snv_count)) {
-		caption <- glue("Only C>T SNVs Evaluated \nC>T SNV count: {snv_count}")
-	}
+## Function to make roc prc plot based on roc and prc coordinate
+# @param roc_coord (data.frame) | dataframe of roc coordinates
+# @param prc_coord (data.frame) | dataframe of prc coordinates
+# @param title (string) | Plot title
+# @param subtitle (string) | Plot subtitle
+# @param x_col (name) | The name of the column to be used for the x-axis. Default: x
+# @param y_col (name) | The name of the column to be used for the y-axis. Default: y
+# @param model_col (name) | The name of the column for color grouping. Default: model
+# @param caption (string) | Plot caption | default: "Only C>T SNVs Evaluated"
+# @return ggplot2 object | containing both roc and prc plot
+make_roc_prc_plot <- function(
+	roc_coord,
+	prc_coord,
+	title,
+	subtitle,
+	caption = "Only C>T SNVs Evaluated",
+	x_col = x,
+	y_col = y,
+	model_col = model
+	) {
 
-	# Compose the plot
-	combined_plot <- (roc.plot | prc.plot | wrap_elements(auc_grob)) +
-		plot_annotation(
-			title = title,
-			subtitle = subtitle,
-			caption = caption
-		) +
-		plot_layout(widths = c(1, 1, 0.6), guides = "collect") &
-		theme(
-			plot.title = element_text(hjust = 0.5, face = "bold", size = 16, margin = margin(t = 10, b = 10)),
-			plot.subtitle = element_text(hjust = 0.5),
-			plot.caption = element_text(hjust = 0),
-			legend.position = "bottom",
-			axis.title.x = element_text(size = 10),
-            axis.title.y = element_text(size = 10)
-		)
+  # ROC Plot
+  roc_plot <- ggplot(roc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
+	geom_abline(linetype = "dashed", color = "lightgrey") +
+	geom_line() +
+	labs(
+		title = "ROC",
+		x = "False Positive Rate (1 - Specificity)",
+		y = "True Positive Rate (Sensitivity)",
+		color = "Models"
+	) +
+	coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+	theme_minimal() +
+	theme(
+		panel.grid.major = element_blank(), # Remove major grid lines
+		panel.grid.minor = element_blank(), # Remove minor grid lines
+		panel.background = element_blank(), # Optional: Remove panel background
+		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
+		legend.position = "bottom",
+		plot.title = element_text(hjust = 0.5) # Center the plot title
+	)
 
-	return(combined_plot)
+  # PRC Plot
+  prc_plot <- ggplot(prc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
+	geom_line() +
+	labs(
+		title = "PRC",
+		x = "Recall",
+		y = "Precision",
+		color = "Models"
+	) +
+	coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+	theme_minimal() +
+	theme(
+		panel.grid.major = element_blank(), # Remove major grid lines
+		panel.grid.minor = element_blank(), # Remove minor grid lines
+		panel.background = element_blank(), # Optional: Remove panel background
+		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
+		legend.position = "bottom",
+		plot.title = element_text(hjust = 0.5) # Center the plot title
+	)
+
+  # Combining the plots using the 'patchwork' package
+  roc_prc_plot <- (roc_plot | prc_plot) +
+	plot_annotation(
+		title = title,
+		subtitle = subtitle,
+		caption = caption
+	) +
+	plot_layout(widths = c(1, 1), guides = "collect") &
+	theme(
+		plot.title = element_text(hjust = 0.5, face = "bold", size = 16, margin = margin(t = 10, b = 10)),
+		plot.subtitle = element_text(hjust = 0.5),
+		plot.caption = element_text(hjust = 0),
+		legend.position = "bottom",
+		axis.title.x = element_text(size = 10),
+		axis.title.y = element_text(size = 10)
+	)
+
+	roc_prc_plot
 }
 
 #### Creates a text panel containing all the AUC metrics for each model
