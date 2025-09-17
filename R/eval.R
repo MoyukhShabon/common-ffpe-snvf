@@ -221,13 +221,21 @@ read_snv <- function(sample_name, filter_name, ffpe_snvf.dir) {
 	read.delim(path)
 }
 
+read_microsec_snv <- function(sample_name, filter_name, ffpe_snvf.dir) {
+	path <- file.path(ffpe_snvf.dir, filter_name, "outputs", sample_name, sprintf("%s.%s.tsv", sample_name, filter_name))
+	read.delim(path)
+}
 
 # @params sample_name	unique identifier for the ffpe sample
 # @params vcf.dir	root directory for VCFs
 # @params filter_name	Unused. Present for compatibility with process_sample()
 # @params read_vcf_f	function to read VCFs. By default set to "read_vcf" which is defined in eval.R
 read_gatk_snv <- function(sample_name, filter_name, vcf.dir, read_vcf_f = read_vcf){
-	d <- read_vcf(file.path(vcf.dir, sample_name, sprintf("%s.vcf.gz", sample_name)), columns = c("chrom", "pos", "ref", "alt", "filter"))
+	path <- file.path(vcf.dir, sample_name, sprintf("%s.vcf.gz", sample_name))
+	if (!file.exists(path)){
+		path <- file.path(vcf.dir, sample_name, sprintf("%s.vcf", sample_name))
+	}
+	d <- read_vcf(path, columns = c("chrom", "pos", "ref", "alt", "filter"))
 	d
 }
 
@@ -297,6 +305,22 @@ preprocess_sobdetector <- function(d, truths) {
 	# Hence, scores needs to be adjusted so that higher score represents a real mutation.
 	d$score <- -d$SOB;
 	# Keep only C>T variants
+	d <- ct_filter(d)
+	d <- add_id(d);
+	d <- annotate_truth(d, truths)
+	d
+}
+
+
+# @param d  data.frame of variant annotation by microsec
+# @param truths  data.frame of ground-truth variants
+# @return data.frame of variants with id and ground truth annotation
+preprocess_microsec <- function(d, truths) {
+	d <- d[, c("Sample", "Chr", "Pos", "Ref", "Alt", "msec_filter_all")]
+	# microsec classifies artifacts which is casted to numeric. 
+	# 0 is artifact, 1 is true mutation.
+	d$score <- ifelse(grepl("Artifact", d$msec_filter_all), 0, 1)
+	colnames(d) <- c("sample_name", "chrom", "pos", "ref", "alt", "msec_filter_all", "score")
 	d <- ct_filter(d)
 	d <- add_id(d);
 	d <- annotate_truth(d, truths)
@@ -412,30 +436,31 @@ process_sample <- function(read_f, truth_f, preprocess_f, evaluate_f, sample_nam
 }
 
 # Function to write results for a processed sample
-# @params processed_obj 	R-object, processed object returned by function: process_sample()
+# @params score_truth_d		data.frame, variant with model's score and ground truth annotation
+# @params processed_obj 	list, returned by function: process_sample()
 # @params outdir_root		string, root output directory for evaluation
 # @params sample_name		string, sample name for the processed sample
 # @params model_name		name of ffpe snv filter being evaluated
-write_sample_eval <- function(processed_obj, outdir_root, sample_name, model_name){
+write_sample_eval <- function(score_truth_d, eval_res_list, outdir_root, sample_name, model_name){
 	
 	# Saving the variant set with scores and ground truth labels for each sample
 	out_dir <- file.path(score_truth_outdir, sample_name)
 	dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-	qwrite(processed_obj$d, file.path(out_dir, sprintf("%s_%s-scores_truths.tsv", sample_name, model_name)))
+	qwrite(score_truth_d, file.path(out_dir, sprintf("%s_%s-scores_truths.tsv", sample_name, model_name)))
 	
 	# Create output directory for roc prc and auc evaluation
 	out_dir <- file.path(eval_outdir, sample_name)
 	dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
-	qwrite(processed_obj$res$eval, file.path(out_dir, sprintf("%s_%s_precrec_eval.rds", sample_name, model_name)))
-	qwrite(processed_obj$res$auc, file.path(out_dir, sprintf("%s_%s_auc_table.tsv", sample_name, model_name)))
-	qwrite(processed_obj$res$roc, file.path(out_dir, sprintf("%s_%s_roc_coordinates.tsv", sample_name, model_name)))
-	qwrite(processed_obj$res$prc, file.path(out_dir, sprintf("%s_%s_prc_coordinates.tsv", sample_name, model_name)))
+	qwrite(eval_res_list$eval, file.path(out_dir, sprintf("%s_%s_precrec_eval.rds", sample_name, model_name)))
+	qwrite(eval_res_list$auc, file.path(out_dir, sprintf("%s_%s_auc_table.tsv", sample_name, model_name)))
+	qwrite(eval_res_list$roc, file.path(out_dir, sprintf("%s_%s_roc_coordinates.tsv", sample_name, model_name)))
+	qwrite(eval_res_list$prc, file.path(out_dir, sprintf("%s_%s_prc_coordinates.tsv", sample_name, model_name)))
 }
 
 # Function to write results for overall evaluation
-# @params score_truth_d		data.frame, model scores with ground truth annotation
-# @params processed_obj 	R-object, processed object returned by function: process_sample()
+# @params score_truth_d		data.frame, variant with model's score and ground truth annotation
+# @params processed_obj 	list, returned by function: process_sample()
 # @params outdir_root		string, root output directory for evaluation
 # @params sample_name		string, sample name for the processed sample
 # @params model_name		name of ffpe snv filter being evaluated

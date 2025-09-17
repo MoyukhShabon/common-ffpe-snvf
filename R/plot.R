@@ -76,7 +76,7 @@ make_roc_prc_plot <- function(
 		panel.background = element_blank(), # Optional: Remove panel background
 		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
 		legend.position = "bottom",
-		plot.title = element_text(hjust = 0.5) # Center the plot title
+		plot.title = element_text(size = 14, face = "plain", hjust = 0.5) # Resize, Center the plot title
 	)
 
   # PRC Plot
@@ -96,7 +96,7 @@ make_roc_prc_plot <- function(
 		panel.background = element_blank(), # Optional: Remove panel background
 		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
 		legend.position = "bottom",
-		plot.title = element_text(hjust = 0.5) # Center the plot title
+		plot.title = element_text(size = 14, face = "plain", hjust = 0.5) # Resize, Center the plot title
 	)
 
   # Combining the plots using the 'patchwork' package
@@ -108,10 +108,11 @@ make_roc_prc_plot <- function(
 	) +
 	plot_layout(widths = c(1, 1), guides = "collect") &
 	theme(
-		plot.title = element_text(hjust = 0.5, face = "bold", size = 16, margin = margin(t = 10, b = 10)),
+		plot.title = element_text(hjust = 0.5, face = "bold", size = 12, margin = margin(t = 10, b = 10)),
 		plot.subtitle = element_text(hjust = 0.5),
 		plot.caption = element_text(hjust = 0),
 		legend.position = "bottom",
+		legend.title = element_blank(),
 		axis.title.x = element_text(size = 10),
 		axis.title.y = element_text(size = 10)
 	)
