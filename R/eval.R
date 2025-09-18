@@ -444,12 +444,12 @@ process_sample <- function(read_f, truth_f, preprocess_f, evaluate_f, sample_nam
 write_sample_eval <- function(score_truth_d, eval_res_list, outdir_root, sample_name, model_name){
 	
 	# Saving the variant set with scores and ground truth labels for each sample
-	out_dir <- file.path(score_truth_outdir, sample_name)
+	out_dir <- file.path(outdir_root, "model-scores_truths", sample_name)
 	dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 	qwrite(score_truth_d, file.path(out_dir, sprintf("%s_%s-scores_truths.tsv", sample_name, model_name)))
 	
 	# Create output directory for roc prc and auc evaluation
-	out_dir <- file.path(eval_outdir, sample_name)
+	out_dir <- file.path(outdir_root, "roc-prc-auc", sample_name)
 	dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 	qwrite(eval_res_list$eval, file.path(out_dir, sprintf("%s_%s_precrec_eval.rds", sample_name, model_name)))
