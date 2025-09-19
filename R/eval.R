@@ -116,10 +116,12 @@ fdr_cut_pred <- function(df, score, fp.cut=0.5) {
 	df.ct <- df[complete.cases(df[[score]]), ]
 	df.nct <- df[!complete.cases(df[[score]]), ]
 
-	##### For non C>T, mutate columns using direct assignment
-	df.nct$score <- NA
-	df.nct$q <- NA
-	df.nct$pred <- TRUE
+	if(nrow(df.nct) != 0) {
+		##### For non C>T, mutate columns using direct assignment
+		df.nct$score <- NA
+		df.nct$q <- NA
+		df.nct$pred <- TRUE
+	}
 
 	##### Predict artifacts based on q-values and adaptive_fdr_cut function
 	# The original dataframe is modified by direct assignment
@@ -221,7 +223,10 @@ read_snv <- function(sample_name, filter_name, ffpe_snvf.dir) {
 	read.delim(path)
 }
 
-read_microsec_snv <- function(sample_name, filter_name, ffpe_snvf.dir) {
+# @params sample_name	unique identifier for the ffpe sample
+# @params filter_name	name of the ffpe filter used in the path structure i.e microsec
+# @params ffpe_snvf.dir	root directory containing the ffpe filter outputs
+read_microsec_snv <- function(sample_name, filter_name = "microsec", ffpe_snvf.dir) {
 	path <- file.path(ffpe_snvf.dir, filter_name, "outputs", sample_name, sprintf("%s.%s.tsv", sample_name, filter_name))
 	read.delim(path)
 }
