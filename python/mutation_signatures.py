@@ -26,8 +26,8 @@ import pysam
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
-matplotlib.use('Agg')
+from matplotlib import use
+use('Agg')
 
 def import_formatted_vcf(vcf_path, sample_name, snv_only = True, normal_chr=True) -> pl.DataFrame:
 	
@@ -63,7 +63,7 @@ def import_formatted_vcf(vcf_path, sample_name, snv_only = True, normal_chr=True
 						"ALT" : "alt"
 			})
 		)
-	elif vcf_path.endswith(".snv"):
+	elif (vcf_path.endswith(".snv") | vcf_path.endswith(".tsv")):
 		vcf = pl.read_csv(vcf_path, separator="\t", infer_schema_length=10000)
 		vcf = vcf.rename({col: col.lower() for col in vcf.columns})
 		
@@ -314,6 +314,7 @@ def SBS96_plot(sig, label = "", name = "", file = False, norm = False,
         plt.savefig(file, bbox_inches = "tight", dpi = 300); f,ax = plt.subplots()
 
 	
-
-
+## A polars mask for filtering C:G>T:A mutations. Invertable using ~
+## Usage df.filter(ct_mask) or df.filter(~ct_mask). Where df: pl.DataFrame
+ct_mask = (((pl.col("ref") == "C") & (pl.col("alt") == "T")) | ((pl.col("ref") == "G") & (pl.col("alt") == "A")))
 
