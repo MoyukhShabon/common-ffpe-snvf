@@ -1,27 +1,27 @@
 case_id	ffpe_sample_name	matched_ff_sample_name	sample_type	n_ct	dataset_id
-Liver	FFPE-Liver-Tumoral_B00GXDN	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	1948	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXDO	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	2299	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXDP	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	1849	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXHK	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	1729	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXHL	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	965	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXCQ	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	624	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXCR	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	735	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXKT	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	541	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXKU	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	527	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXLQ	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	804	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXLR	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	783	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXLY	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	1435	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXLZ	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	1108	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXDN	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXDO	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXDP	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXHK	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXHL	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXCQ	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXCR	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXKT	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXKU	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXLQ	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXLR	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXLY	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXLZ	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXDN	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	1948	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXDO	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	2299	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXDP	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	1849	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXHK	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	1729	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXHL	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	965	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXCQ	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	624	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXCR	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	735	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXKT	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	541	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXKU	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	527	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXLQ	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	804	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXLR	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	FFPE	783	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXLY	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	1435	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXLZ	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	FFPE	1108	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXDN	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXDO	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXDP	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXHK	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXHL	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXCQ	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXCR	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXKT	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXKU	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXLQ	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	Bonnet et al., 2018
+Colon	FFPE-Colon-Tumoral_B00GXLR	Frozen-Colon-Tumoral_B00GXJ0;Frozen-Colon-Tumoral_B00GXJ1;Frozen-Colon-Tumoral_B00GXL9;Frozen-Colon-Tumoral_B00GXLB	Ground Truth	507	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXLY	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXLZ	Frozen-Liver-Tumoral_B00GXDH;Frozen-Liver-Tumoral_B00GXDI;Frozen-Liver-Tumoral_B00GXLH;Frozen-Liver-Tumoral_B00GXLJ	Ground Truth	268	Bonnet et al., 2018
