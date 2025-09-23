@@ -1,22 +1,22 @@
 case_id	sample_name	sample_type	n_ct	dataset_id
-Liver	FFPE-Liver-Tumoral_B00GXDN	FFPE	1948	Bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXDO	FFPE	2299	Bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXDP	FFPE	1849	Bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXCQ	FFPE	624	Bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXCR	FFPE	735	Bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXLY	FFPE	1435	Bonnet et al., 2018
-Liver	FFPE-Liver-Tumoral_B00GXLZ	FFPE	1108	Bonnet et al., 2018
-Liver	Frozen-Liver-Tumoral_B00GXDH	Fresh Frozen	68	Bonnet et al., 2018
-Liver	Frozen-Liver-Tumoral_B00GXDI	Fresh Frozen	79	Bonnet et al., 2018
-Liver	Frozen-Liver-Tumoral_B00GXLH	Fresh Frozen	101	Bonnet et al., 2018
-Liver	Frozen-Liver-Tumoral_B00GXLJ	Fresh Frozen	60	Bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXHK	FFPE	1729	Bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXHL	FFPE	965	Bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXKT	FFPE	541	Bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXKU	FFPE	527	Bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXLQ	FFPE	804	Bonnet et al., 2018
-Colon	FFPE-Colon-Tumoral_B00GXLR	FFPE	783	Bonnet et al., 2018
-Colon	Frozen-Colon-Tumoral_B00GXJ0	Fresh Frozen	251	Bonnet et al., 2018
-Colon	Frozen-Colon-Tumoral_B00GXJ1	Fresh Frozen	250	Bonnet et al., 2018
-Colon	Frozen-Colon-Tumoral_B00GXL9	Fresh Frozen	252	Bonnet et al., 2018
-Colon	Frozen-Colon-Tumoral_B00GXLB	Fresh Frozen	264	Bonnet et al., 2018
+Liver	FFPE-Liver-Tumoral_B00GXDN	FFPE	1948	bonnet18
+Liver	FFPE-Liver-Tumoral_B00GXDO	FFPE	2299	bonnet18
+Liver	FFPE-Liver-Tumoral_B00GXDP	FFPE	1849	bonnet18
+Liver	FFPE-Liver-Tumoral_B00GXCQ	FFPE	624	bonnet18
+Liver	FFPE-Liver-Tumoral_B00GXCR	FFPE	735	bonnet18
+Liver	FFPE-Liver-Tumoral_B00GXLY	FFPE	1435	bonnet18
+Liver	FFPE-Liver-Tumoral_B00GXLZ	FFPE	1108	bonnet18
+Liver	Frozen-Liver-Tumoral_B00GXDH	Fresh Frozen	68	bonnet18
+Liver	Frozen-Liver-Tumoral_B00GXDI	Fresh Frozen	79	bonnet18
+Liver	Frozen-Liver-Tumoral_B00GXLH	Fresh Frozen	101	bonnet18
+Liver	Frozen-Liver-Tumoral_B00GXLJ	Fresh Frozen	60	bonnet18
+Colon	FFPE-Colon-Tumoral_B00GXHK	FFPE	1729	bonnet18
+Colon	FFPE-Colon-Tumoral_B00GXHL	FFPE	965	bonnet18
+Colon	FFPE-Colon-Tumoral_B00GXKT	FFPE	541	bonnet18
+Colon	FFPE-Colon-Tumoral_B00GXKU	FFPE	527	bonnet18
+Colon	FFPE-Colon-Tumoral_B00GXLQ	FFPE	804	bonnet18
+Colon	FFPE-Colon-Tumoral_B00GXLR	FFPE	783	bonnet18
+Colon	Frozen-Colon-Tumoral_B00GXJ0	Fresh Frozen	251	bonnet18
+Colon	Frozen-Colon-Tumoral_B00GXJ1	Fresh Frozen	250	bonnet18
+Colon	Frozen-Colon-Tumoral_B00GXL9	Fresh Frozen	252	bonnet18
+Colon	Frozen-Colon-Tumoral_B00GXLB	Fresh Frozen	264	bonnet18
