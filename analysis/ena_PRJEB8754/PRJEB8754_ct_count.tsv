@@ -1,21 +1,21 @@
-case_id	ffpe_sample_name	matched_ff_sample_name	sample_type	n_ct	dataset_id
-Pat01	Pat01_Meta_FFPE_ERR791893	Pat01_Meta_Frozen_ERR791883	FFPE	34	Betge et al., 2015
-Pat03	Pat03_Meta_FFPE_ERR791895	Pat03_Meta_Frozen_ERR791884	FFPE	49	Betge et al., 2015
-Pat04	Pat04_Meta_FFPE_ERR791896	Pat04_Meta_Frozen_ERR791891	FFPE	33	Betge et al., 2015
-Pat08	Pat08_Meta_FFPE_ERR791901	Pat08_Meta_Frozen_ERR791886	FFPE	17	Betge et al., 2015
-Pat09	Pat09_Meta_FFPE_ERR791902	Pat09_Meta_Frozen_ERR791887	FFPE	38	Betge et al., 2015
-Pat10	Pat10_Meta_FFPE_ERR791903	Pat10_Meta_Frozen_ERR791888	FFPE	13	Betge et al., 2015
-Pat11	Pat11_Meta_FFPE_ERR791905	Pat11_Meta_Frozen_ERR791889	FFPE	29	Betge et al., 2015
-Pat12	Pat12_Meta_FFPE_ERR791907	Pat12_Meta_Frozen_ERR791911	FFPE	41	Betge et al., 2015
-Pat13	Pat13_Meta_FFPE_ERR791908	Pat13_Meta_Frozen_ERR791890	FFPE	37	Betge et al., 2015
-Pat14	Pat14_Meta_FFPE_ERR791909	Pat14_Meta_Frozen_ERR791885	FFPE	34	Betge et al., 2015
-Pat01	Pat01_Meta_FFPE_ERR791893	Pat01_Meta_Frozen_ERR791883	Ground Truth	14	Betge et al., 2015
-Pat03	Pat03_Meta_FFPE_ERR791895	Pat03_Meta_Frozen_ERR791884	Ground Truth	5	Betge et al., 2015
-Pat04	Pat04_Meta_FFPE_ERR791896	Pat04_Meta_Frozen_ERR791891	Ground Truth	10	Betge et al., 2015
-Pat08	Pat08_Meta_FFPE_ERR791901	Pat08_Meta_Frozen_ERR791886	Ground Truth	12	Betge et al., 2015
-Pat09	Pat09_Meta_FFPE_ERR791902	Pat09_Meta_Frozen_ERR791887	Ground Truth	11	Betge et al., 2015
-Pat10	Pat10_Meta_FFPE_ERR791903	Pat10_Meta_Frozen_ERR791888	Ground Truth	7	Betge et al., 2015
-Pat11	Pat11_Meta_FFPE_ERR791905	Pat11_Meta_Frozen_ERR791889	Ground Truth	12	Betge et al., 2015
-Pat12	Pat12_Meta_FFPE_ERR791907	Pat12_Meta_Frozen_ERR791911	Ground Truth	12	Betge et al., 2015
-Pat13	Pat13_Meta_FFPE_ERR791908	Pat13_Meta_Frozen_ERR791890	Ground Truth	18	Betge et al., 2015
-Pat14	Pat14_Meta_FFPE_ERR791909	Pat14_Meta_Frozen_ERR791885	Ground Truth	10	Betge et al., 2015
+case_id	sample_name	sample_type	n_ct	dataset_id
+Pat01	Pat01_Meta_FFPE_ERR791893	FFPE	34	Betge et al., 2015
+Pat01	Pat01_Meta_Frozen_ERR791883	Fresh Frozen	14	Betge et al., 2015
+Pat03	Pat03_Meta_FFPE_ERR791895	FFPE	49	Betge et al., 2015
+Pat03	Pat03_Meta_Frozen_ERR791884	Fresh Frozen	5	Betge et al., 2015
+Pat04	Pat04_Meta_FFPE_ERR791896	FFPE	33	Betge et al., 2015
+Pat04	Pat04_Meta_Frozen_ERR791891	Fresh Frozen	10	Betge et al., 2015
+Pat08	Pat08_Meta_FFPE_ERR791901	FFPE	17	Betge et al., 2015
+Pat08	Pat08_Meta_Frozen_ERR791886	Fresh Frozen	12	Betge et al., 2015
+Pat09	Pat09_Meta_FFPE_ERR791902	FFPE	38	Betge et al., 2015
+Pat09	Pat09_Meta_Frozen_ERR791887	Fresh Frozen	11	Betge et al., 2015
+Pat10	Pat10_Meta_FFPE_ERR791903	FFPE	13	Betge et al., 2015
+Pat10	Pat10_Meta_Frozen_ERR791888	Fresh Frozen	7	Betge et al., 2015
+Pat11	Pat11_Meta_FFPE_ERR791905	FFPE	29	Betge et al., 2015
+Pat11	Pat11_Meta_Frozen_ERR791889	Fresh Frozen	12	Betge et al., 2015
+Pat12	Pat12_Meta_FFPE_ERR791907	FFPE	41	Betge et al., 2015
+Pat12	Pat12_Meta_Frozen_ERR791911	Fresh Frozen	12	Betge et al., 2015
+Pat13	Pat13_Meta_FFPE_ERR791908	FFPE	37	Betge et al., 2015
+Pat13	Pat13_Meta_Frozen_ERR791890	Fresh Frozen	18	Betge et al., 2015
+Pat14	Pat14_Meta_FFPE_ERR791909	FFPE	34	Betge et al., 2015
+Pat14	Pat14_Meta_Frozen_ERR791885	Fresh Frozen	10	Betge et al., 2015
