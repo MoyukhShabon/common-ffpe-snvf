@@ -265,8 +265,8 @@ def SBS96_plot(sig, label = "", name = "", file = False, norm = False,
         plt.ylim(0,np.max(sig) * 1.15)
         
         if  np.round(np.sum (sig)) != 1:
-            plt.annotate(f"Total Count : {np.sum(sig):,}\nC>T Count : {np.sum(sig[32:48]):,}", (0, np.max(sig)-1), size=s*1.2)
-        plt.ylabel("Number of\nSBSs", size = 14)
+            plt.annotate(f"Total Count : {np.sum(sig):,}\nC>T Count : {np.sum(sig[32:48]):,}", (0, np.max(sig)-(np.max(sig)*0.1)), size=s*1.5)
+        plt.ylabel("Number of\nSBSs", size = s*2)
         plt.annotate (name,(90 - len(name), np.max(sig) * 0.95), size = s)
     
     if xticks_label:
@@ -289,7 +289,7 @@ def SBS96_plot(sig, label = "", name = "", file = False, norm = False,
         p.set_clip_on(False)
         ax.add_patch(p)
         ax.text(0.5 * (left + right), 0.5 * (bottom + top), channel6[i], 
-                color = text_col[i], weight='bold',size = s*1.4,
+                color = text_col[i], weight='bold',size = s*1.8,
                 horizontalalignment='center',verticalalignment='center', 
                 transform=ax.transAxes)
     
