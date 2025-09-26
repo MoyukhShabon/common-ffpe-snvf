@@ -55,17 +55,19 @@ make_roc_prc_plot <- function(
 	caption = "Only C>T SNVs Evaluated",
 	x_col = x,
 	y_col = y,
-	model_col = model
+	model_col = model,
+	text_scale = 1,
+	line_width = 0.5
 	) {
 
   # ROC Plot
   roc_plot <- ggplot(roc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
 	geom_abline(linetype = "dashed", color = "lightgrey") +
-	geom_line() +
+	geom_line(linewidth = line_width, alpha = 0.8) +
 	labs(
 		title = "ROC",
-		x = "False Positive Rate (1 - Specificity)",
-		y = "True Positive Rate (Sensitivity)",
+		x = "1 - Specificity",
+		y = "Sensitivity",
 		color = "Models"
 	) +
 	coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
@@ -76,12 +78,12 @@ make_roc_prc_plot <- function(
 		panel.background = element_blank(), # Optional: Remove panel background
 		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
 		legend.position = "bottom",
-		plot.title = element_text(size = 14, face = "plain", hjust = 0.5) # Resize, Center the plot title
+		plot.title = element_text(size = 12*text_scale, face = "plain", hjust = 0.5) # Resize, Center the plot title
 	)
 
   # PRC Plot
   prc_plot <- ggplot(prc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
-	geom_line() +
+	geom_line(linewidth = line_width, alpha = 0.8) +
 	labs(
 		title = "PRC",
 		x = "Recall",
@@ -96,7 +98,7 @@ make_roc_prc_plot <- function(
 		panel.background = element_blank(), # Optional: Remove panel background
 		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
 		legend.position = "bottom",
-		plot.title = element_text(size = 14, face = "plain", hjust = 0.5) # Resize, Center the plot title
+		plot.title = element_text(size = 12*text_scale, face = "plain", hjust = 0.5) # Resize, Center the plot title
 	)
 
   # Combining the plots using the 'patchwork' package
@@ -108,13 +110,16 @@ make_roc_prc_plot <- function(
 	) +
 	plot_layout(widths = c(1, 1), guides = "collect") &
 	theme(
-		plot.title = element_text(hjust = 0.5, face = "bold", size = 12, margin = margin(t = 10, b = 10)),
+		plot.title = element_text(hjust = 0.5, face = "bold", size = 12*text_scale, margin = margin(t = 10, b = 10)),
 		plot.subtitle = element_text(hjust = 0.5),
 		plot.caption = element_text(hjust = 0),
 		legend.position = "bottom",
 		legend.title = element_blank(),
-		axis.title.x = element_text(size = 10),
-		axis.title.y = element_text(size = 10)
+		legend.key.width = unit(line_width, "cm"),
+		legend.text = element_text(size = 8*text_scale),
+		axis.title.x = element_text(size = 10*text_scale),
+		axis.title.y = element_text(size = 10*text_scale),
+		axis.text = element_text(size = 8*text_scale)
 	)
 
 	roc_prc_plot

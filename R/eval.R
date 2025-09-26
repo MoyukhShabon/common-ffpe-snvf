@@ -460,7 +460,7 @@ write_sample_eval <- function(score_truth_d, eval_res_list, outdir_root, sample_
 	qwrite(score_truth_d, file.path(out_dir, sprintf("%s_%s-scores_truths.tsv", sample_name, model_name)))
 	
 	# Create output directory for roc prc and auc evaluation
-	out_dir <- file.path(outdir_root, "roc-prc-auc", sample_name)
+	out_dir <- file.path(outdir_root, "roc-prc-auc/precrec", sample_name)
 	dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 	qwrite(eval_res_list$eval, file.path(out_dir, sprintf("%s_%s_precrec_eval.rds", sample_name, model_name)))
