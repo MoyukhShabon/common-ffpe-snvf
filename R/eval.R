@@ -44,9 +44,13 @@ read_vcf <- function(path, columns = NULL, split_multiallelic = TRUE) {
 # @params ref_col	string containing Reference allele column name
 # @params alt_col	string containing Alternate allele column name
 # @returns dataframe with only C:G>T:A mutations
-ct_filter <- function(d, ref_col = "ref", alt_col = "alt") {
+ct_filter <- function(d, ref_col = "ref", alt_col = "alt", invert = FALSE) {
 	ct_mask = ((d[["ref"]] == "C") & (d[["alt"]] == "T")) | ((d[["ref"]] == "G") & (d[["alt"]] == "A"))
-	d[ct_mask,]
+	if (invert){
+		d[!ct_mask,]
+	} else {
+		d[ct_mask,]
+	}
 }
 
 
