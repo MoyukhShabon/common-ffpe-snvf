@@ -75,20 +75,17 @@ annotate_truth <- function(d, truth) {
 
 #### Create a set of SNVs across multiple samples
 # @params paths list of strings with vcf paths
-# @return data.frame of variant union set
+# @return data.frame of variant union set with ID annotation
 snv_union <- function(paths) {
 
-	combined <- data.frame()
-
-	for (path in paths){
-		# Read the VCF data
-		sample <- read_vcf(path, columns = c("chrom", "pos", "ref", "alt"))
-		# Select only the required columns using base R
-		combined <- rbind(combined, sample)
-	}
+	# Combine SNVs from VCF if multiple exists
+	combined <- do.call(
+		rbind,
+		lapply(paths, function(vcf_path) read_vcf(vcf_path, columns = c("chrom", "pos", "ref", "alt")))
+	)
 
 	# only keep one instance of each variant
-	union <- unique(combined)
+	union <- add_id(unique(combined))
 
 	return(union)
 }
