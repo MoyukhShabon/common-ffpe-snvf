@@ -148,7 +148,7 @@ fdr_cut_pred <- function(df, score, fp.cut=0.5) {
 #### Calculate True/False Positives/Negatives from prediction and ground truth
 # @param data.frame with models prediction and ground truth columns
 # @return list with numeric FP, TP, FN, and TP
-calc.confusion.matrix <- function(df, pred_col = "pred", truth_col = "truth") {
+calc_confusion_matrix <- function(df, pred_col = "pred", truth_col = "truth") {
 	TP <- nrow(df[df[[pred_col]] & df[[truth_col]], ])
 	FP <- nrow(df[df[[pred_col]] & !df[[truth_col]], ])
 	FN <- nrow(df[!df[[pred_col]] & df[[truth_col]], ])
@@ -168,7 +168,7 @@ calc.confusion.matrix <- function(df, pred_col = "pred", truth_col = "truth") {
 # @return list with sensitivity, specificity, precision, and recall
 calc_eval_metrics <- function(df, pred_col = "pred", truth_col = "truth") {
 
-	confusion_matrix <- calc.confusion.matrix(df, pred_col, truth_col)
+	confusion_matrix <- calc_confusion_matrix(df, pred_col, truth_col)
 
 	precision <- confusion_matrix$TP / (confusion_matrix$TP + confusion_matrix$FP)
 	recall <- confusion_matrix$TP / (confusion_matrix$TP + confusion_matrix$FN)
