@@ -300,7 +300,7 @@ preprocess_vafsnvf <- function(d, truths) {
 # @param d  data.frame of variant annotation by sobdetector
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_sobdetector <- function(d, truths) {
+preprocess_sobdetector <- function(d, truths, ct_only=TRUE) {
 	# SOBDetector output column explanations:
 	# 		artiStatus: Binary classification made by SOBDetector. Values are "snv" or "artifact"
 	# 		SOB: This is the strand oreintation bias score column which ranges from 0 and 1. Exception values: "." or NaN. 
@@ -317,7 +317,10 @@ preprocess_sobdetector <- function(d, truths) {
 	# Hence, scores needs to be adjusted so that higher score represents a real mutation.
 	d$score <- -d$SOB;
 	# Keep only C>T variants
-	d <- ct_filter(d)
+	if (ct_only){
+		# Keep only C>T variants
+		d <- ct_filter(d)
+	}
 	d <- add_id(d);
 	d <- annotate_truth(d, truths)
 	d
@@ -327,13 +330,16 @@ preprocess_sobdetector <- function(d, truths) {
 # @param d  data.frame of variant annotation by microsec
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_microsec <- function(d, truths) {
+preprocess_microsec <- function(d, truths, ct_only=TRUE) {
 	d <- d[, c("Sample", "Chr", "Pos", "Ref", "Alt", "msec_filter_all")]
 	# microsec classifies artifacts which is casted to numeric. 
 	# 0 is artifact, 1 is true mutation.
 	d$score <- ifelse(grepl("Artifact", d$msec_filter_all), 0, 1)
 	colnames(d) <- c("sample_name", "chrom", "pos", "ref", "alt", "msec_filter_all", "score")
-	d <- ct_filter(d)
+	if (ct_only){
+		# Keep only C>T variants
+		d <- ct_filter(d)
+	}
 	d <- add_id(d);
 	d <- annotate_truth(d, truths)
 	d
@@ -342,12 +348,14 @@ preprocess_microsec <- function(d, truths) {
 # @param d  data.frame of variant annotation by GATK Orientation Bias Mixture Model
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_gatk_obmm <- function(d, truths){
+preprocess_gatk_obmm <- function(d, truths, ct_only=TRUE){
 	### GATK Orientation Bias mixture model makes binary classification. This is casted into scores 0 and 1
 	d$score <- ifelse(grepl("orientation", d$filter), 0, 1)
 	d <- d[!is.na(d$score), ]
-	# Keep only C>T variants
-	d <- ct_filter(d)
+	if (ct_only){
+		# Keep only C>T variants
+		d <- ct_filter(d)
+	}
 	d <- add_id(d)
 	d <- annotate_truth(d, truths)
 	d
