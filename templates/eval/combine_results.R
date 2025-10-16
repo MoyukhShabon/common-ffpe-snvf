@@ -3,10 +3,7 @@ library(io)
 
 ## Dataset specific
 eval_dirs = c(
-		# "PRJEB8754/vcf_pass-orient-pos-sb_ad_filtered/roc-prc-auc/precrec",
-		# "SRP044740/vcf_filtered_pass_orientation/roc-prc-auc/precrec",
-		# "SRP065941/vcf_filtered_pass_orientation/roc-prc-auc/precrec",
-		"PRJEB44073/vcf_filtered_pass_orientation/roc-prc-auc/precrec"
+		"roc-prc-auc/precrec"
 	)
 
 for (eval_dir in eval_dirs){

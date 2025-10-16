@@ -1,18 +1,16 @@
 ## This script is used to make ROC and PRC plots from the evaluation results aggregated using combine_results.R
-source("../common-ffpe-snvf/R/plot.R")
+source("../../common-ffpe-snvf/R/plot.R")
 
 dset_dirs <- c(
-	# "PRJEB8754/vcf_pass-orient-pos-sb_ad_filtered",
-	# "SRP044740/vcf_filtered_pass_orientation",
-	# "SRP065941/vcf_filtered_pass_orientation",
-	"PRJEB44073/vcf_filtered_pass_orientation"
+	"."
 )
 
 dset_author <- c(
 	"PRJEB8754" = "Betge15",
 	"SRP044740" = "ENA SRP044740",
 	"SRP065941" = "Oh15",
-	"PRJEB44073" = "Chong21"
+	"PRJEB44073" = "Chong21",
+	"." = "TCGA"
 )
 
 for (dir in dset_dirs){
