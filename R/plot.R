@@ -46,6 +46,8 @@ match_return_sample_name <- function(roc_path, prc_path, roc_suffix = "_all-mode
 # @param y_col (name) | The name of the column to be used for the y-axis. Default: y
 # @param model_col (name) | The name of the column for color grouping. Default: model
 # @param caption (string) | Plot caption | default: "Only C>T SNVs Evaluated"
+# @param legend_rows (integer) | The number of rows to wrap the legend into. Default: NULL (single row).
+# @param individual_plots (boolean) | creates separate ROC and PRC plots alongside combined ROC PRC plot. Returns list of plot objects (roc_prc, roc, prc)
 # @return ggplot2 object | containing both roc and prc plot
 make_roc_prc_plot <- function(
 	roc_coord,
@@ -58,58 +60,75 @@ make_roc_prc_plot <- function(
 	model_col = model,
 	text_scale = 1,
 	line_width = 0.5,
+	legend_rows = NULL,
 	individual_plots = FALSE
 	) {
 
-  # ROC Plot
-  roc_plot <- ggplot(roc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
-	geom_abline(linetype = "dashed", color = "lightgrey") +
-	geom_line(linewidth = line_width, alpha = 0.8) +
-	coord_fixed() +
-	labs(
-		title = "ROC",
-		x = "1 - Specificity",
-		y = "Sensitivity",
-		color = "Models"
-	) +
-	coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
-	theme_minimal() +
-	theme(
-		panel.grid.major = element_blank(), # Remove major grid lines
-		panel.grid.minor = element_blank(), # Remove minor grid lines
-		panel.background = element_blank(), # Optional: Remove panel background
-		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
-		legend.position = "bottom",
-		legend.title = element_blank(),
-		plot.title = element_text(size = 12*text_scale, face = "plain", hjust = 0.5) # Resize, Center the plot title
-	) +
-	scale_color_hue(h = c(60, 420))
+	# ROC Plot
+	roc_plot <- ggplot(roc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
+		geom_abline(linetype = "dashed", color = "lightgrey") +
+		geom_line(linewidth = line_width, alpha = 0.8) +
+		coord_fixed() +
+		labs(
+			title = "ROC",
+			x = "1 - Specificity",
+			y = "Sensitivity",
+			color = "Models"
+		) +
+		coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+		theme_minimal() +
+		theme(
+			panel.grid.major = element_blank(), # Remove major grid lines
+			panel.grid.minor = element_blank(), # Remove minor grid lines
+			panel.background = element_blank(), # Optional: Remove panel background
+			axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
+			legend.position = "bottom",
+			legend.title = element_blank(),
+			legend.text = element_text(size = 10*text_scale),
+			axis.title.x = element_text(size = 10*text_scale),
+			axis.title.y = element_text(size = 10*text_scale),
+			axis.text = element_text(size = 8*text_scale),
+			plot.title = element_text(size = 12*text_scale, face = "plain", hjust = 0.5) # Resize, Center the plot title
+		)
+		#  +
+		# scale_color_hue(h = c(60, 420))
 
-  # PRC Plot
-  prc_plot <- ggplot(prc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
-	geom_line(linewidth = line_width, alpha = 0.8) +
-	coord_fixed() +
-	labs(
-		title = "PRC",
-		x = "Recall",
-		y = "Precision",
-		color = "Models"
-	) +
-	coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
-	theme_minimal() +
-	theme(
-		panel.grid.major = element_blank(), # Remove major grid lines
-		panel.grid.minor = element_blank(), # Remove minor grid lines
-		panel.background = element_blank(), # Optional: Remove panel background
-		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
-		legend.position = "bottom",
-		legend.title = element_blank(),
-		plot.title = element_text(size = 12*text_scale, face = "plain", hjust = 0.5) # Resize, Center the plot title
-	) +
-	scale_color_hue(h = c(60, 420))
+	# PRC Plot
+	prc_plot <- ggplot(prc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
+		geom_line(linewidth = line_width, alpha = 0.8) +
+		coord_fixed() +
+		labs(
+			title = "PRC",
+			x = "Recall",
+			y = "Precision",
+			color = "Models"
+		) +
+		coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+		theme_minimal() +
+		theme(
+			panel.grid.major = element_blank(), # Remove major grid lines
+			panel.grid.minor = element_blank(), # Remove minor grid lines
+			panel.background = element_blank(), # Optional: Remove panel background
+			axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
+			legend.position = "bottom",
+			legend.title = element_blank(),
+			legend.text = element_text(size = 10*text_scale),
+			axis.title.x = element_text(size = 10*text_scale),
+			axis.title.y = element_text(size = 10*text_scale),
+			axis.text = element_text(size = 8*text_scale),
+			plot.title = element_text(size = 12*text_scale, face = "plain", hjust = 0.5) # Resize, Center the plot title
+		)
+		#  +
+		# scale_color_hue(h = c(60, 420))
+
+	if (!is.null(legend_rows)) {
+		legend_guide <- guides(color = guide_legend(nrow = legend_rows))
+		roc_plot <- roc_plot + legend_guide
+		prc_plot <- prc_plot + legend_guide
+	}
 
 	# Combining the plots using the 'patchwork' package
-	roc_prc_plot <- (roc_plot | prc_plot) +
+	roc_prc_plot <- (roc_plot + prc_plot) +
 		plot_annotation(
 			title = title,
 			subtitle = subtitle,
@@ -123,11 +142,16 @@ make_roc_prc_plot <- function(
 			legend.position = "bottom",
 			legend.title = element_blank(),
 			legend.key.width = unit(line_width, "cm"),
-			legend.text = element_text(size = 8*text_scale),
+			legend.text = element_text(size = 10*text_scale),
 			axis.title.x = element_text(size = 10*text_scale),
 			axis.title.y = element_text(size = 10*text_scale),
 			axis.text = element_text(size = 8*text_scale)
 		)
+
+	# if (individual_plots) {
+	# 	roc_plot <- roc_plot + theme(legend.position = "bottom")
+	# 	prc_plot <- prc_plot + theme(legend.position = "bottom")
+	# }
 
 	if(!individual_plots){
 		return(roc_prc_plot)
