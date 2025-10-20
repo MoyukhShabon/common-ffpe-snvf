@@ -65,6 +65,7 @@ make_roc_prc_plot <- function(
   roc_plot <- ggplot(roc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
 	geom_abline(linetype = "dashed", color = "lightgrey") +
 	geom_line(linewidth = line_width, alpha = 0.8) +
+	coord_fixed() +
 	labs(
 		title = "ROC",
 		x = "1 - Specificity",
@@ -79,6 +80,7 @@ make_roc_prc_plot <- function(
 		panel.background = element_blank(), # Optional: Remove panel background
 		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
 		legend.position = "bottom",
+		legend.title = element_blank(),
 		plot.title = element_text(size = 12*text_scale, face = "plain", hjust = 0.5) # Resize, Center the plot title
 	) +
 	scale_color_hue(h = c(60, 420))
@@ -86,6 +88,7 @@ make_roc_prc_plot <- function(
   # PRC Plot
   prc_plot <- ggplot(prc_coord, aes(x = {{ x_col }}, y = {{ y_col }}, color = {{ model_col }})) +
 	geom_line(linewidth = line_width, alpha = 0.8) +
+	coord_fixed() +
 	labs(
 		title = "PRC",
 		x = "Recall",
@@ -100,6 +103,7 @@ make_roc_prc_plot <- function(
 		panel.background = element_blank(), # Optional: Remove panel background
 		axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
 		legend.position = "bottom",
+		legend.title = element_blank(),
 		plot.title = element_text(size = 12*text_scale, face = "plain", hjust = 0.5) # Resize, Center the plot title
 	) +
 	scale_color_hue(h = c(60, 420))
