@@ -167,7 +167,7 @@ make_roc_prc_plot <- function(
 }
 
 #### Creates a text panel containing all the AUC metrics for each model
-make.plot.auc.text <- function(multi.model.eval.object, model.names = c("mobsnvf", "vafsnvf", "sobdetector", "microsec")) {
+make_plot_auc_text <- function(multi.model.eval.object, model.names = c("mobsnvf", "vafsnvf", "sobdetector", "microsec")) {
 	
 	##### Get AUCs to include in plot
 	all.model.aucs <- auc(multi.model.eval.object)
