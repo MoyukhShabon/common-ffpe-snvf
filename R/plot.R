@@ -60,6 +60,7 @@ make_roc_prc_plot <- function(
 	model_col = model,
 	text_scale = 1,
 	line_width = 0.5,
+	legend_scale = 1,
 	legend_rows = NULL,
 	individual_plots = FALSE
 	) {
@@ -84,7 +85,8 @@ make_roc_prc_plot <- function(
 			axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
 			legend.position = "bottom",
 			legend.title = element_blank(),
-			legend.text = element_text(size = 10*text_scale),
+			legend.key.width = unit(line_width*legend_scale, "cm"),
+			legend.text = element_text(size = 10*text_scale*legend_scale),
 			axis.title.x = element_text(size = 10*text_scale),
 			axis.title.y = element_text(size = 10*text_scale),
 			axis.text = element_text(size = 8*text_scale),
@@ -112,7 +114,9 @@ make_roc_prc_plot <- function(
 			axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
 			legend.position = "bottom",
 			legend.title = element_blank(),
-			legend.text = element_text(size = 10*text_scale),
+			legend.key.width = unit(line_width*legend_scale, "cm"),
+			legend.text = element_text(size = 10*text_scale*legend_scale),
+			axis.title.x = element_text(size = 10*text_scale),
 			axis.title.x = element_text(size = 10*text_scale),
 			axis.title.y = element_text(size = 10*text_scale),
 			axis.text = element_text(size = 8*text_scale),
@@ -141,17 +145,13 @@ make_roc_prc_plot <- function(
 			plot.caption = element_text(hjust = 0),
 			legend.position = "bottom",
 			legend.title = element_blank(),
-			legend.key.width = unit(line_width, "cm"),
-			legend.text = element_text(size = 10*text_scale),
+			legend.key.width = unit(line_width*legend_scale, "cm"),
+			legend.text = element_text(size = 10*text_scale*legend_scale),
 			axis.title.x = element_text(size = 10*text_scale),
 			axis.title.y = element_text(size = 10*text_scale),
 			axis.text = element_text(size = 8*text_scale)
 		)
 
-	# if (individual_plots) {
-	# 	roc_plot <- roc_plot + theme(legend.position = "bottom")
-	# 	prc_plot <- prc_plot + theme(legend.position = "bottom")
-	# }
 
 	if(!individual_plots){
 		return(roc_prc_plot)
