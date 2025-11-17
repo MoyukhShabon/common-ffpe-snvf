@@ -117,7 +117,6 @@ make_roc_prc_plot <- function(
 			legend.key.width = unit(line_width*legend_scale, "cm"),
 			legend.text = element_text(size = 10*text_scale*legend_scale),
 			axis.title.x = element_text(size = 10*text_scale),
-			axis.title.x = element_text(size = 10*text_scale),
 			axis.title.y = element_text(size = 10*text_scale),
 			axis.text = element_text(size = 8*text_scale),
 			plot.title = element_text(size = 12*text_scale, face = "plain", hjust = 0.5) # Resize, Center the plot title

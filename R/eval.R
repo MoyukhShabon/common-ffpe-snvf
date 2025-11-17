@@ -227,7 +227,12 @@ get_multimodel_auroc_auprc <- function(multimodel_roc_df,  multimodel_prc_df, sa
 # @params ffpe_snvf.dir	root directory containing the ffpe filter outputs
 read_snv <- function(sample_name, filter_name, ffpe_snvf.dir) {
 	path <- file.path(ffpe_snvf.dir, filter_name, sample_name, sprintf("%s.%s.snv", sample_name, filter_name))
-	read.delim(path)
+	if (file.exists(path)) {
+		read.delim(path)
+	} else {
+		path <- file.path(ffpe_snvf.dir, filter_name, sample_name, sprintf("%s.%s.tsv", sample_name, filter_name))
+		read.delim(path)
+	}
 }
 
 # @params sample_name	unique identifier for the ffpe sample
