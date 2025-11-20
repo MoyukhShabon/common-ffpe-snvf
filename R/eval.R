@@ -131,11 +131,11 @@ fdr_cut_pred <- function(df, score, fp.cut=0.5) {
 	}
 
 	##### Predict artifacts based on q-values and adaptive_fdr_cut function
-	# The original dataframe is modified by direct assignment
+	# set the 0 to machine precision
 	df.ct$score <- ifelse(df.ct[[score]] == 0, .Machine$double.eps, df.ct[[score]])
 	df.ct$q <- p.adjust(df.ct$score, "BH")
 	## TRUE being real muatation and FALSE being artifacts
-	df.ct$pred <- ifelse(adaptive_fdr_cut(df.ct$q, fp.cut), TRUE, FALSE)
+	df.ct$pred <- adaptive_fdr_cut(df.ct$q, fp.cut)
 
 	##### Combine the C>T and non C>T dataframes back into one single dataframe
 	df <- rbind(df.ct, df.nct)
