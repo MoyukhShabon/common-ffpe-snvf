@@ -484,14 +484,16 @@ write_sample_eval <- function(score_truth_d, eval_res_list, outdir_root, sample_
 	dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 	qwrite(score_truth_d, file.path(out_dir, sprintf("%s_%s-scores_truths.tsv", sample_name, model_name)))
 	
-	# Create output directory for roc prc and auc evaluation
-	out_dir <- file.path(outdir_root, "roc-prc-auc/precrec", sample_name)
-	dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+	if (!is.null(score_truth_d)){
+		# Create output directory for roc prc and auc evaluation
+		out_dir <- file.path(outdir_root, "roc-prc-auc/precrec", sample_name)
+		dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
-	qwrite(eval_res_list$eval, file.path(out_dir, sprintf("%s_%s_precrec_eval.rds", sample_name, model_name)))
-	qwrite(eval_res_list$auc, file.path(out_dir, sprintf("%s_%s_auc_table.tsv", sample_name, model_name)))
-	qwrite(eval_res_list$roc, file.path(out_dir, sprintf("%s_%s_roc_coordinates.tsv", sample_name, model_name)))
-	qwrite(eval_res_list$prc, file.path(out_dir, sprintf("%s_%s_prc_coordinates.tsv", sample_name, model_name)))
+		qwrite(eval_res_list$eval, file.path(out_dir, sprintf("%s_%s_precrec_eval.rds", sample_name, model_name)))
+		qwrite(eval_res_list$auc, file.path(out_dir, sprintf("%s_%s_auc_table.tsv", sample_name, model_name)))
+		qwrite(eval_res_list$roc, file.path(out_dir, sprintf("%s_%s_roc_coordinates.tsv", sample_name, model_name)))
+		qwrite(eval_res_list$prc, file.path(out_dir, sprintf("%s_%s_prc_coordinates.tsv", sample_name, model_name)))
+	}
 }
 
 # Function to write results for overall evaluation
@@ -500,7 +502,10 @@ write_sample_eval <- function(score_truth_d, eval_res_list, outdir_root, sample_
 # @params outdir_root		string, root output directory for evaluation
 # @params sample_name		string, sample name for the processed sample
 # @params model_name		name of ffpe snv filter being evaluated
-write_overall_eval <- function(score_truth_d, result_obj, score_truth_outdir, eval_outdir, sample_name, model_name){
+write_overall_eval <- function(score_truth_d, result_obj, outdir_root, sample_name, model_name){
+
+	score_truth_outdir <- file.path(outdir_root, "model-scores_truths")
+	eval_outdir <- file.path(outdir_root, "roc-prc-auc", "precrec")	
 	
 	dir.create(score_truth_outdir, recursive = TRUE, showWarnings = FALSE)
 	qwrite(score_truth_d, file.path(score_truth_outdir, sprintf("%s_%s-scores_truths.tsv", sample_name, model_name)))
