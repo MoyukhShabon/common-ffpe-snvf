@@ -313,6 +313,19 @@ preprocess_ideafix <- function(d, truths) {
 	d
 }
 
+# @param d  data.frame of variant annotation by ffpolish
+# @param truths  data.frame of ground-truth variants
+# @return data.frame of variants with id and ground truth annotation
+preprocess_ffpolish <- function(d, truths, ct_only=TRUE) {
+	if(ct_only){
+		d <- ct_filter(d)
+	}
+	d <- d[!is.na(d$score), ]
+	d <- add_id(d)
+	d <- annotate_truth(d, truths)
+	d
+}
+
 # @param d  data.frame of variant annotation by sobdetector
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
