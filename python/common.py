@@ -1,6 +1,7 @@
 import polars as pl
 import numpy as np
 from scipy.stats import false_discovery_control
+from sklearn.metrics import confusion_matrix
 
 
 def natural_sort_variants(df: pl.DataFrame, chr_col: str = "chrom", pos_col: str = "pos") -> pl.DataFrame:
@@ -85,3 +86,20 @@ def fdr_cut_pred(df: pl.DataFrame, score_col: str, fp_cut: float = 0.5) -> pl.Da
 	return final_df
 
 
+def get_eval_metrics(truth: pl.Series, pred: pl.Series) -> dict:
+
+    cm = confusion_matrix(truth, pred)
+    TN, FP, FN, TP = cm.ravel()
+
+    eval_metrics = {
+        "precision": TP / (TP + FP),
+        "recall": TP / (TP + FN),
+        "specificity": TN / (TN + FP),
+        "TP": TP,
+        "TN": TN,
+        "FP": FP,
+        "FN": FN,
+        "confusion_matrix": cm
+    }
+
+    return eval_metrics
