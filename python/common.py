@@ -4,6 +4,16 @@ from scipy.stats import false_discovery_control
 from sklearn.metrics import confusion_matrix
 
 
+def read_variants(path:str, columns: list = ["#CHROM", "POS", "REF", "ALT", "FILTER"]) -> pl.DataFrame:
+	variants = (
+		pl.read_csv(path, separator="\t", comment_prefix="##", infer_schema_length=1000, columns=columns)
+		.rename(lambda x: x.lstrip("#").lower())
+		.with_columns(pl.col("alt").str.split(","))
+		.explode("alt")
+	)
+	return variants
+
+
 def natural_sort_variants(df: pl.DataFrame, chr_col: str = "chrom", pos_col: str = "pos") -> pl.DataFrame:
 	return (
 		df.with_columns(
@@ -18,8 +28,8 @@ def natural_sort_variants(df: pl.DataFrame, chr_col: str = "chrom", pos_col: str
 			.fill_null(999) # Put weird contigs at the end
 			.alias("chr_rank")
 		)
-		.sort(["chr_rank", pos_col]) # Sort by Rank, then Position
-		.drop("chr_rank") # Remove the temp column
+		.sort(["chr_rank", pos_col]) # Sort
+		.drop("chr_rank")
 	)
 
 
