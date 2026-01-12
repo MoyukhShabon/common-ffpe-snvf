@@ -10,11 +10,11 @@ library(tidyr)
 #### A list of Chromosomes 1-22, X and Y
 standard_chromosomes <- paste0("chr", c(1:22, "X", "Y"))
 
-## Read a VCF File
-## @param path (string) | VCF path
-## @param columns (vector) | (optional) column names to keep in lowercase
-## @param split_multiallelic (bool) | (optional) splits multiallelic sites to biallelic
-## @return  dataframe | containing vcf columns
+#' Read a VCF File
+#' @param path [string] The path to the VCF file.
+#' @param columns [vector] of column names to keep in lowercase (optional).
+#' @param split_multiallelic [logical] Splits multiallelic sties into biallelic (optional).
+#' @return [data.frame] Table containing VCF columns
 read_vcf <- function(path, columns = NULL, split_multiallelic = TRUE) {
 	all_lines <- readLines(path)
 	filtered_lines <- grep("^##", all_lines, value = TRUE, invert = TRUE)
@@ -39,11 +39,11 @@ read_vcf <- function(path, columns = NULL, split_multiallelic = TRUE) {
 	vcf
 }
 
-# Filter C>T variants
-# @params d	data.frame of variants
-# @params ref_col	string containing Reference allele column name
-# @params alt_col	string containing Alternate allele column name
-# @returns dataframe with only C:G>T:A mutations
+#' Filter C>T variants
+#' @param d	[data.frame] of variants
+#' @param ref_col	[string] containing Reference allele column name
+#' @param alt_col	[string] containing Alternate allele column name
+#' @returns [data.frame] with only C:G>T:A mutations
 ct_filter <- function(d, ref_col = "ref", alt_col = "alt", invert = FALSE) {
 	ct_mask = ((d[["ref"]] == "C") & (d[["alt"]] == "T")) | ((d[["ref"]] == "G") & (d[["alt"]] == "A"))
 	if (invert){

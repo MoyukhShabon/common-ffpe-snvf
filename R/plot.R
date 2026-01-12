@@ -82,7 +82,8 @@ make_roc_prc_plot <- function(
 			panel.grid.major = element_blank(), # Remove major grid lines
 			panel.grid.minor = element_blank(), # Remove minor grid lines
 			panel.background = element_blank(), # Optional: Remove panel background
-			axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
+			axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines,
+			axis.ticks = element_line(color = "darkgrey"),
 			legend.position = "bottom",
 			legend.title = element_blank(),
 			legend.key.width = unit(line_width*legend_scale, "cm"),
@@ -112,6 +113,7 @@ make_roc_prc_plot <- function(
 			panel.grid.minor = element_blank(), # Remove minor grid lines
 			panel.background = element_blank(), # Optional: Remove panel background
 			axis.line = element_line(color = "darkgrey"), # Optional: Add axis lines
+			axis.ticks = element_line(color = "darkgrey"),
 			legend.position = "bottom",
 			legend.title = element_blank(),
 			legend.key.width = unit(line_width*legend_scale, "cm"),
