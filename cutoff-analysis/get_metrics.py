@@ -169,7 +169,3 @@ for path in score_label_path:
 
 pl.DataFrame(all_metrics).pipe(post_process).write_csv("combined.tsv", separator = "\t")
 
-
-threshold_metrics
-
-
