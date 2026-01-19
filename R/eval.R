@@ -36,8 +36,9 @@ read_vcf <- function(path, columns = NULL, split_multiallelic = TRUE) {
 		vcf <- separate_rows(vcf, alt, sep = ",")
 	}
 
-	vcf
+	return(vcf)
 }
+
 
 #' Filter C>T variants
 #' @param d	[data.frame] of variants
@@ -45,12 +46,40 @@ read_vcf <- function(path, columns = NULL, split_multiallelic = TRUE) {
 #' @param alt_col	[string] containing Alternate allele column name
 #' @returns [data.frame] with only C:G>T:A mutations
 ct_filter <- function(d, ref_col = "ref", alt_col = "alt", invert = FALSE) {
-	ct_mask = ((d[["ref"]] == "C") & (d[["alt"]] == "T")) | ((d[["ref"]] == "G") & (d[["alt"]] == "A"))
-	if (invert){
-		d[!ct_mask,]
-	} else {
-		d[ct_mask,]
-	}
+  # Use the variables ref_col/alt_col, not the hardcoded strings "ref"/"alt"
+  ct_mask <- ((d[[ref_col]] == "C") & (d[[alt_col]] == "T")) | 
+             ((d[[ref_col]] == "G") & (d[[alt_col]] == "A"))
+  
+  if (invert){
+    d[!ct_mask,]
+  } else {
+    d[ct_mask,]
+  }
+}
+
+#' Restores variants omitted by ffpe snvf model and fills in scores accordingly
+#' FFPolish and Ideafix only evaluates on PASS variants. 
+#' Therefore non-PASS variants are implied to be artifacts
+#' Hence, non-PASS variants scores are filled with 0 i.e definite artifact
+#' Remaining variants omitted are filled in with 1 assuming the models predict it as definite real mutation
+#' For example, Ideafix only evaluated SNVs with VAF<0.3. Calling anything above that threshold to be real mutations
+#' @param snvf [data.frame] result from ffpe filtering model
+#' @param vcf [string] path to the vcf used for ffpe_snvf
+#' @return restored_snvf [data.frame] dataframe with variants 
+#' restored and score col filled accordingly
+restore_snvs <- function(snvf, vcf){
+	vcf_vars <- read_vcf(vcf, columns = c("chrom", "pos", "ref", "alt", "filter"))
+	vcf_ct_snv <- ct_filter(vcf_vars)
+
+	restored_snvf <- merge(vcf_ct_snv, snvf, by = c("chrom", "pos", "ref", "alt"), all.x = TRUE)
+
+	restored_snvf$score <- ifelse(restored_snvf$filter != "PASS", 0, restored_snvf$score)
+	restored_snvf$score <- ifelse(is.na(restored_snvf$score), 1, restored_snvf$score)
+	
+	restored_snvf$filter <- NULL
+
+	return(restored_snvf)
+	
 }
 
 
@@ -279,13 +308,14 @@ construct_ground_truth <- function(annot_d, tissue, vcf.dir){
 # @param d  data.frame of variant annotation by mobsnvf
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_mobsnvf <- function(d, truths) {
+preprocess_mobsnvf <- function(d, truths, vcf) {
 	# mobsnvf sets FOBP to NA for variants that are not C>T
 	d <- d[!is.na(d$FOBP), ];
 	# lower score signifies real mutation:  
 	# hence, we flip scores to make higher score signify a real mutation
-	d$score <- -d$FOBP;
+	d$score <- -d$FOBP + 1;
 	d <- add_id(d);
+	d <- restore_snvs(d, vcf)
 	d <- annotate_truth(d, truths)
 	d
 }
@@ -293,11 +323,12 @@ preprocess_mobsnvf <- function(d, truths) {
 # @param d  data.frame of variant annotation by vafsnvf
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_vafsnvf <- function(d, truths) {
+preprocess_vafsnvf <- function(d, truths, vcf) {
 	d <- d[!is.na(d$VAFF), ]
 	# vafsnvf sets VAFF to NA for variants that are not C>T
 	d$score <- d$VAFF;
 	d <- add_id(d);
+	d <- restore_snvs(d, vcf)
 	d <- annotate_truth(d, truths)
 	d
 }
@@ -305,10 +336,11 @@ preprocess_vafsnvf <- function(d, truths) {
 # @param d  data.frame of variant annotation by ideafix
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_ideafix <- function(d, truths) {
+preprocess_ideafix <- function(d, truths, vcf) {
 	d <- d[!is.na(d$deam_score), ]
-	d$score <- -d$deam_score
+	d$score <- -d$deam_score + 1
 	d <- add_id(d)
+	d <- restore_snvs(d, vcf)
 	d <- annotate_truth(d, truths)
 	d
 }
@@ -316,12 +348,13 @@ preprocess_ideafix <- function(d, truths) {
 # @param d  data.frame of variant annotation by ffpolish
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_ffpolish <- function(d, truths, ct_only=TRUE) {
+preprocess_ffpolish <- function(d, truths, vcf, ct_only=TRUE) {
 	if(ct_only){
 		d <- ct_filter(d)
 	}
 	d <- d[!is.na(d$score), ]
 	d <- add_id(d)
+	d <- restore_snvs(d, vcf)
 	d <- annotate_truth(d, truths)
 	d
 }
@@ -329,7 +362,7 @@ preprocess_ffpolish <- function(d, truths, ct_only=TRUE) {
 # @param d  data.frame of variant annotation by sobdetector
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_sobdetector <- function(d, truths, ct_only=TRUE) {
+preprocess_sobdetector <- function(d, truths, vcf, ct_only=TRUE) {
 	# SOBDetector output column explanations:
 	# 		artiStatus: Binary classification made by SOBDetector. Values are "snv" or "artifact"
 	# 		SOB: This is the strand oreintation bias score column which ranges from 0 and 1. Exception values: "." or NaN. 
@@ -344,12 +377,13 @@ preprocess_sobdetector <- function(d, truths, ct_only=TRUE) {
 	d <- d[!is.na(d$SOB), ]
 	# in this set the TRUE label indicates real mutation and FALSE indicates artifacts
 	# Hence, scores needs to be adjusted so that higher score represents a real mutation.
-	d$score <- -d$SOB;
+	d$score <- -d$SOB + 1;
 	# Keep only C>T variants
 	if (ct_only){
 		# Keep only C>T variants
 		d <- ct_filter(d)
 	}
+	d <- restore_snvs(d, vcf)
 	d <- add_id(d);
 	d <- annotate_truth(d, truths)
 	d
