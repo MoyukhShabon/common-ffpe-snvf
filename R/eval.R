@@ -73,7 +73,7 @@ restore_snvs <- function(snvf, vcf){
 
 	restored_snvf <- merge(vcf_ct_snv, snvf, by = c("chrom", "pos", "ref", "alt"), all.x = TRUE)
 
-	restored_snvf$score <- ifelse(restored_snvf$filter != "PASS", 0, restored_snvf$score)
+	restored_snvf$score <- ifelse(((restored_snvf$filter != "PASS") & is.na(restored_snvf$score)), 0, restored_snvf$score)
 	restored_snvf$score <- ifelse(is.na(restored_snvf$score), 1, restored_snvf$score)
 	
 	restored_snvf$filter <- NULL
@@ -308,14 +308,16 @@ construct_ground_truth <- function(annot_d, tissue, vcf.dir){
 # @param d  data.frame of variant annotation by mobsnvf
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_mobsnvf <- function(d, truths, vcf) {
+preprocess_mobsnvf <- function(d, truths, vcf=NULL) {
 	# mobsnvf sets FOBP to NA for variants that are not C>T
 	d <- d[!is.na(d$FOBP), ];
 	# lower score signifies real mutation:  
 	# hence, we flip scores to make higher score signify a real mutation
 	d$score <- -d$FOBP + 1;
 	d <- add_id(d);
-	d <- restore_snvs(d, vcf)
+	if (!is.null(vcf)){
+		d <- restore_snvs(d, vcf)
+	}
 	d <- annotate_truth(d, truths)
 	d
 }
@@ -323,12 +325,14 @@ preprocess_mobsnvf <- function(d, truths, vcf) {
 # @param d  data.frame of variant annotation by vafsnvf
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_vafsnvf <- function(d, truths, vcf) {
+preprocess_vafsnvf <- function(d, truths, vcf=NULL) {
 	d <- d[!is.na(d$VAFF), ]
 	# vafsnvf sets VAFF to NA for variants that are not C>T
 	d$score <- d$VAFF;
 	d <- add_id(d);
-	d <- restore_snvs(d, vcf)
+	if (!is.null(vcf)){
+		d <- restore_snvs(d, vcf)
+	}
 	d <- annotate_truth(d, truths)
 	d
 }
@@ -336,11 +340,13 @@ preprocess_vafsnvf <- function(d, truths, vcf) {
 # @param d  data.frame of variant annotation by ideafix
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_ideafix <- function(d, truths, vcf) {
+preprocess_ideafix <- function(d, truths, vcf=NULL) {
 	d <- d[!is.na(d$deam_score), ]
 	d$score <- -d$deam_score + 1
 	d <- add_id(d)
-	d <- restore_snvs(d, vcf)
+	if (!is.null(vcf)){
+		d <- restore_snvs(d, vcf)
+	}
 	d <- annotate_truth(d, truths)
 	d
 }
@@ -348,13 +354,15 @@ preprocess_ideafix <- function(d, truths, vcf) {
 # @param d  data.frame of variant annotation by ffpolish
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_ffpolish <- function(d, truths, vcf, ct_only=TRUE) {
+preprocess_ffpolish <- function(d, truths, vcf=NULL, ct_only=TRUE) {
 	if(ct_only){
 		d <- ct_filter(d)
 	}
 	d <- d[!is.na(d$score), ]
 	d <- add_id(d)
-	d <- restore_snvs(d, vcf)
+	if (!is.null(vcf)){
+		d <- restore_snvs(d, vcf)
+	}
 	d <- annotate_truth(d, truths)
 	d
 }
@@ -362,7 +370,7 @@ preprocess_ffpolish <- function(d, truths, vcf, ct_only=TRUE) {
 # @param d  data.frame of variant annotation by sobdetector
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_sobdetector <- function(d, truths, vcf, ct_only=TRUE) {
+preprocess_sobdetector <- function(d, truths, vcf=NULL, ct_only=TRUE) {
 	# SOBDetector output column explanations:
 	# 		artiStatus: Binary classification made by SOBDetector. Values are "snv" or "artifact"
 	# 		SOB: This is the strand oreintation bias score column which ranges from 0 and 1. Exception values: "." or NaN. 
@@ -383,7 +391,9 @@ preprocess_sobdetector <- function(d, truths, vcf, ct_only=TRUE) {
 		# Keep only C>T variants
 		d <- ct_filter(d)
 	}
-	d <- restore_snvs(d, vcf)
+	if (!is.null(vcf)){
+		d <- restore_snvs(d, vcf)
+	}
 	d <- add_id(d);
 	d <- annotate_truth(d, truths)
 	d
