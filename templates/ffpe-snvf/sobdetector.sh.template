@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -euo pipefail
+
+bam_path=$1
+vcf_path=$2
+root_outdir=$3
+
+vcf_name=$(basename $vcf_path)
+sample_name=${vcf_name%%.*}
+
+# vcf_indir=../../../data/vcf_ad_filtered
+# bam_indir=../../../data/bam
+outdir="${root_outdir}/sobdetector/${sample_name}"
+mkdir -p $outdir
+
+jar="../../../java/SOBDetector_v1.0.4.jar"
+echo $jar
+
+# bam=$(echo -n ${bam_indir}/${bam_path})
+bam=$(echo -n ${bam_path})
+if [[ ! -f $bam ]]; then
+	echo "${bam_path} not found" >&2
+	exit 2
+fi
+
+vcf=$(echo -n ${vcf_path})
+if [[ ! -f $vcf ]]; then
+	echo "${vcf_path} not found." >&2
+	exit 2
+fi
+
+echo "inputs:" >&2
+echo "  $bam" >&2
+echo "  $vcf" >&2
+
+## Convert VCF to tabular format: ( CHR | POS | REF | ALT ) . As SOBDetector did not work with the VCFs
+snv=${outdir}/${sample_name}.input.snv
+
+printf 'chrom\tpos\tref\talt\n' > $snv
+bcftools norm -m - $vcf | bcftools view | grep -v "#" | cut -f 1,2,4,5 >> $snv
+
+# SOBDetector inserts an extra TAB character after first 4 columns
+java -jar $jar --input-type Table --input-variants $snv --input-bam $bam --output-variants $outdir/${sample_name}.sobdetector.snv &&
+sed -i 's/\t\t/\t/g' $outdir/${sample_name}.sobdetector.snv

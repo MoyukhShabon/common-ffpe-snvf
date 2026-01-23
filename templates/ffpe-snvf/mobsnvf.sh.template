@@ -1,0 +1,55 @@
+#!/bin/bash
+
+set -euo pipefail
+
+bam_path=$1
+vcf_path=$2
+root_outdir=$3
+ref=$4
+
+vcf_name=$(basename $vcf_path)
+sample_name=${vcf_name%%.*}
+
+
+# vcf_indir=../../../data/vcf_ad_filtered
+# bam_indir=../../../data/bam
+outdir="${root_outdir}/mobsnvf/${sample_name}"
+mkdir -p $outdir
+echo -e $outdir
+
+# bam=$(echo -n ${bam_indir}/${bam_path})
+bam=$(echo -n ${bam_path})
+if [[ ! -f $bam ]]; then
+	echo "${bam_path} not found" >&2
+	exit 2
+fi
+
+vcf=$(echo -n ${vcf_path})
+if [[ ! -f $vcf ]]; then
+	echo "${vcf_path} not found." >&2
+	exit 2
+fi
+
+echo "inputs:" >&2
+echo "  $bam" >&2
+echo "  $vcf" >&2
+
+snv=${outdir}/${sample_name}.input.snv
+printf 'chrom\tpos\tref\talt\n' > $snv
+bcftools norm -m - $vcf | bcftools view | grep -v "#" | cut -f 1,2,4,5 >> $snv
+
+hts-mobsnvf quantify -M freq -t ffpe -f $ref -b $bam -J $outdir/${sample_name}.obquant.json
+phi=$(grep phi $outdir/${sample_name}.obquant.json | sed -E 's/.*"phi":.([0-9.e+-]+),?/\1/')
+
+# bash cannot do floating point comparison, so we do regex match
+if [[ $phi =~ 0\.0+[eE]\+00  ]] ; then
+	# estimated damage is 0; try filtering anyway with unknown phi
+	hts-mobsnvf identify -M freq -t ffpe -b $bam -V $snv -g 0 -v 0 \
+		-o $outdir/${sample_name}.mobsnvf.snv
+else
+	hts-mobsnvf identify -M freq -t ffpe -b $bam -V $snv -g 0 -v 0 \
+		--phi $phi --fixed-phi -o $outdir/${sample_name}.mobsnvf.snv
+fi
+
+echo "Finished FFPE SNVF Filtering"
+echo -e "\tOutput saved to: $outdir/${sample_name}.mobsnvf.snv"

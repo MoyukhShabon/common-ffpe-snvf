@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -euo pipefail
+
+bam_fname=$1
+vcf_fname=$2
+root_outdir=$3
+
+vcf_name=$(basename $vcf_fname)
+sample_name=${vcf_name%%.*}
+
+# vcf_indir=../../../data/vcf_ad_filtered
+# bam_indir=../../../data/bam
+outdir="${root_outdir}/vafsnvf/${sample_name}"
+mkdir -p $outdir
+
+
+# bam=$(echo -n ${bam_indir}/${bam_fname})
+bam=$(echo -n ${bam_fname})
+if [[ ! -f $bam ]]; then
+	echo "${bam_fname} not found" >&2
+	exit 2
+fi
+
+vcf=$(echo -n ${vcf_fname})
+if [[ ! -f $vcf ]]; then
+	echo "${vcf_fname} not found." >&2
+	exit 2
+fi
+
+echo "inputs:" >&2
+echo "  $bam" >&2
+echo "  $vcf" >&2
+
+snv=${outdir}/${sample_name}.input.snv
+printf 'chrom\tpos\tref\talt\n' > $snv
+bcftools norm -m - $vcf | bcftools view | grep -v "#" | cut -f 1,2,4,5 >> $snv
+
+hts-vafsnvf C T $bam $snv $outdir/${sample_name}.vafsnvf.snv
+
+echo "Finished FFPE SNVF Filtering"
+echo -e "\tOutput saved to: $outdir/${sample_name}.vafsnvf.snv"
