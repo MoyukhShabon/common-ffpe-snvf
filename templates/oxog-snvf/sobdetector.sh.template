@@ -2,18 +2,17 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+jar="${SCRIPT_DIR}/../../java/SOBDetector_v1.0.4.jar"
+
 bam_path=$1
 vcf_path=$2
-root_outdir=$3
+
+outdir=$3
+mkdir -p $outdir
 
 vcf_name=$(basename $vcf_path)
 sample_name=${vcf_name%%.*}
-
-outdir="${root_outdir}/sobdetector/${sample_name}"
-mkdir -p $outdir
-
-jar="../../java/SOBDetector_v1.0.4.jar"
-echo $jar
 
 bam=$(echo -n ${bam_path})
 if [[ ! -f $bam ]]; then
@@ -40,3 +39,8 @@ bcftools norm -m - $vcf | bcftools view | grep -v "#" | cut -f 1,2,4,5 >> $snv
 # SOBDetector inserts an extra TAB character after first 4 columns
 java -jar $jar --input-type Table --input-variants $snv --input-bam $bam --output-variants $outdir/${sample_name}.sobdetector.snv &&
 sed -i 's/\t\t/\t/g' $outdir/${sample_name}.sobdetector.snv
+
+rm $snv
+
+echo "Finished SOBDetector SNVF Filtering"
+echo -e "\tOutput saved to: $outdir/${sample_name}.vafsnvf.snv"

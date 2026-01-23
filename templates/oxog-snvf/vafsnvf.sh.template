@@ -4,14 +4,12 @@ set -euo pipefail
 
 bam_fname=$1
 vcf_fname=$2
-root_outdir=$3
+
+outdir=$3
+mkdir -p $outdir
 
 vcf_name=$(basename $vcf_fname)
 sample_name=${vcf_name%%.*}
-
-outdir="${root_outdir}/vafsnvf/${sample_name}"
-mkdir -p $outdir
-
 
 bam=$(echo -n ${bam_fname})
 if [[ ! -f $bam ]]; then
@@ -35,5 +33,7 @@ bcftools norm -m - $vcf | bcftools view | grep -v "#" | cut -f 1,2,4,5 >> $snv
 
 hts-vafsnvf G T $bam $snv $outdir/${sample_name}.vafsnvf.snv
 
-echo "Finished FFPE SNVF Filtering"
+rm $snv
+
+echo "Finished VAFSNVF OXOG SNVF Filtering"
 echo -e "\tOutput saved to: $outdir/${sample_name}.vafsnvf.snv"

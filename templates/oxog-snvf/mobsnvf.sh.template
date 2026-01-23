@@ -4,15 +4,13 @@ set -euo pipefail
 
 bam_path=$1
 vcf_path=$2
-root_outdir=$3
 ref=$4
+
+outdir=$3
+mkdir -p $outdir
 
 vcf_name=$(basename $vcf_path)
 sample_name=${vcf_name%%.*}
-
-outdir="${root_outdir}/mobsnvf/${sample_name}"
-mkdir -p $outdir
-echo -e $outdir
 
 bam=$(echo -n ${bam_path})
 if [[ ! -f $bam ]]; then
@@ -46,6 +44,8 @@ else
 	hts-mobsnvf identify -M freq -t oxog -b $bam -V $snv -g 0 -v 0 \
 		--phi $phi --fixed-phi -o $outdir/${sample_name}.mobsnvf.snv
 fi
+
+rm $snv
 
 echo "Finished OXOG SNVF Filtering"
 echo -e "\tOutput saved to: $outdir/${sample_name}.mobsnvf.snv"
