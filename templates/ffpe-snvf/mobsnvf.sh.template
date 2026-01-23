@@ -4,20 +4,15 @@ set -euo pipefail
 
 bam_path=$1
 vcf_path=$2
-root_outdir=$3
+
+outdir=$3
+mkdir -p $outdir
+
 ref=$4
 
 vcf_name=$(basename $vcf_path)
 sample_name=${vcf_name%%.*}
 
-
-# vcf_indir=../../../data/vcf_ad_filtered
-# bam_indir=../../../data/bam
-outdir="${root_outdir}/mobsnvf/${sample_name}"
-mkdir -p $outdir
-echo -e $outdir
-
-# bam=$(echo -n ${bam_indir}/${bam_path})
 bam=$(echo -n ${bam_path})
 if [[ ! -f $bam ]]; then
 	echo "${bam_path} not found" >&2

@@ -4,20 +4,16 @@ set -euo pipefail
 
 bam_path=$1
 vcf_path=$2
-root_outdir=$3
+
+outdir=$3
+mkdir -p $outdir
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+jar="${SCRIPT_DIR}/../../java/SOBDetector_v1.0.4.jar"
 
 vcf_name=$(basename $vcf_path)
 sample_name=${vcf_name%%.*}
 
-# vcf_indir=../../../data/vcf_ad_filtered
-# bam_indir=../../../data/bam
-outdir="${root_outdir}/sobdetector/${sample_name}"
-mkdir -p $outdir
-
-jar="../../../java/SOBDetector_v1.0.4.jar"
-echo $jar
-
-# bam=$(echo -n ${bam_indir}/${bam_path})
 bam=$(echo -n ${bam_path})
 if [[ ! -f $bam ]]; then
 	echo "${bam_path} not found" >&2
