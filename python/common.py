@@ -28,16 +28,20 @@ def read_variants(path:str, columns: list = ["#CHROM", "POS", "REF", "ALT"]) -> 
 	return variants
 
 def snv_filter(variants: pl.DataFrame) -> pl.DataFrame:
-    return variants.filter(
-        (pl.col("ref").str.len_chars() == 1) &
-        (pl.col("alt").str.len_chars() == 1)
+	return variants.filter(
+		(pl.col("ref").str.len_chars() == 1) &
+		(pl.col("alt").str.len_chars() == 1)
 	)
 
-def ct_filter(variants: pl.DataFrame) -> pl.DataFrame:
-    return variants.filter(
-        ((pl.col("ref").str.to_uppercase() == "C") & (pl.col("alt").str.to_uppercase() == "T")) |
-        ((pl.col("ref").str.to_uppercase() == "G") & (pl.col("alt").str.to_uppercase() == "A"))
+def ct_filter(variants: pl.DataFrame, invert=False) -> pl.DataFrame:
+	mask = (
+		((pl.col("ref").str.to_uppercase() == "C") & (pl.col("alt").str.to_uppercase() == "T")) |
+		((pl.col("ref").str.to_uppercase() == "G") & (pl.col("alt").str.to_uppercase() == "A"))
 	)
+	if invert:
+		return variants.filter(~mask)
+	else:
+		return variants.filter(mask)
 
 
 def natural_sort_variants(df: pl.DataFrame, chr_col: str = "chrom", pos_col: str = "pos") -> pl.DataFrame:
