@@ -26,8 +26,10 @@ import pysam
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 from matplotlib.ticker import MaxNLocator
 from common import snv_filter
+import threading
 
 def import_formatted_vcf(vcf_path, sample_name, snv_only = True, normal_chr=True) -> pl.DataFrame:
 	
@@ -91,28 +93,32 @@ def import_formatted_vcf(vcf_path, sample_name, snv_only = True, normal_chr=True
 
 
 
-def get_context(row, genome):
-	chrom = row["chrom"]
-	pos = row["pos"]
-	ref = row["ref"]
+def get_context(row, genome, lock):
+    chrom = row["chrom"]
+    pos = row["pos"]
+    ref = row["ref"]
 
-	# Get chromosome length
-	chrom_length = genome.get_reference_length(chrom)
+    # Fetching sequence is NOT thread-safe in pysam
+    with lock:
+        try:
+            chrom_length = genome.get_reference_length(chrom)
+            
+            # Handle 1-based to 0-based conversion and edge cases
+            if pos <= 1:
+                left_flank = "N"
+            else:
+                # fetch is 0-based, half-open [start, end)
+                left_flank = genome.fetch(chrom, pos - 2, pos - 1)
 
-	# Handle 1-based to 0-based conversion and edge cases
-	# If left context is out of bounds, use 'N'
-	if pos <= 1:
-		left_flank = "N"
-	else:
-		left_flank = genome.fetch(chrom, pos - 2, pos - 1)
+            if pos >= chrom_length:
+                right_flank = "N"
+            else:
+                right_flank = genome.fetch(chrom, pos, pos + 1)
+        except ValueError:
+            # Handle cases where chrom might not exist in fasta
+            return "N" + ref + "N"
 
-	# If right context is out of bounds, use 'N'
-	if pos >= chrom_length:
-		right_flank = "N"
-	else:
-		right_flank = genome.fetch(chrom, pos, pos + 1)
-
-	return (left_flank + ref + right_flank).upper()
+    return (left_flank + ref + right_flank).upper()
 
 
 def collapse_mut_96c(x):
@@ -125,35 +131,60 @@ def collapse_mut_96c(x):
 		"A>C": "T>G"
 	}
 	return complement_to_canonical.get(x, x)
-	
+
+## Bug Identified: The whole sequence should be complemented.
+# def collapse_context_96c(x):
+# 	if not isinstance(x, str):
+# 		raise TypeError("Input context must be a string")
+# 	if len(x) < 3:
+# 		raise ValueError("Input context string length must be at least 3")
+# 	if len(x) % 2 == 0:
+# 		raise ValueError("Input context string length must be odd to have a middle base")
+# 	mid = len(x) // 2
+# 	base_map = {"G": "C", "A": "T"}
+# 	new_mid = base_map.get(x[mid], x[mid])
+# 	return x[:mid] + new_mid + x[mid+1:]
+
+def reverse_complement_seq(seq):
+    complement = {"A": "T", "T": "A", "C": "G", "G": "C", "N": "N"}
+    return "".join(complement.get(base, base) for base in reversed(seq))
+
 def collapse_context_96c(x):
-	if not isinstance(x, str):
-		raise TypeError("Input context must be a string")
-	if len(x) < 3:
-		raise ValueError("Input context string length must be at least 3")
-	if len(x) % 2 == 0:
-		raise ValueError("Input context string length must be odd to have a middle base")
-	mid = len(x) // 2
-	base_map = {"G": "C", "A": "T"}
-	new_mid = base_map.get(x[mid], x[mid])
-	return x[:mid] + new_mid + x[mid+1:]
+    if not isinstance(x, str):
+        raise TypeError("Input context must be a string")
+    if len(x) < 3:
+        raise ValueError("Input context string length must be at least 3")
+    if len(x) % 2 == 0:
+        raise ValueError("Input context string length must be odd to have a middle base")
+    
+    mid_idx = len(x) // 2
+    ref_base = x[mid_idx]
+    
+    # If the reference base is Purine (G or A), we must Reverse Complement the WHOLE context
+    # to match the Pyrimidine (C or T) mutation conversion.
+    if ref_base in ["G", "A"]:
+        return reverse_complement_seq(x)
+    
+    return x
 
 
 def variants_mut_profile(snv, genome, sample_name = None, c96=True):
+
+	genome_lock = threading.Lock()
 
 	snv = snv.pipe(snv_filter)
 
 	if sample_name:
 		snv = snv.with_columns(pl.lit(sample_name).alias("sample_name"))
 
-	## obtain mutation type
+	## obtain mutation type i.e. SBS change e.g C>T, G>A rtc
 	snv = snv.with_columns([
 		pl.concat_str([pl.col("ref"), pl.lit(">"), pl.col("alt")]).alias("mutation_type"),
 	])
 	
 	## Obtain mutation trinucleotide context
 	snv = snv.with_columns([
-		pl.struct(["chrom", "pos", "ref"]).map_elements(lambda row: get_context(row, genome), return_dtype=pl.String).alias("trinucleotide"),
+		pl.struct(["chrom", "pos", "ref"]).map_elements(lambda row: get_context(row, genome, genome_lock), return_dtype=pl.String).alias("trinucleotide"),
 	])
 	
 	if c96:
@@ -247,15 +278,26 @@ def SBS96_plot(sig, label="", name="", file=None, norm=False,
 	
 
 	channel6 = ['C>A','C>G','C>T','T>A','T>C','T>G']
-	channel96 = ['ACA', 'ACC', 'ACG', 'ACT', 'CCA', 'CCC', 'CCG', 'CCT', 'GCA',
-			   'GCC', 'GCG', 'GCT', 'TCA', 'TCC', 'TCG', 'TCT', 'ACA', 'ACC',
-			   'ACG', 'ACT', 'CCA', 'CCC', 'CCG', 'CCT', 'GCA', 'GCC', 'GCG',
-			   'GCT', 'TCA', 'TCC', 'TCG', 'TCT', 'ACA', 'ACC', 'ACG', 'ACT',
-			   'CCA', 'CCC', 'CCG', 'CCT', 'GCA', 'GCC', 'GCG', 'GCT', 'TCA',
-			   'TCC', 'TCG', 'TCT', 'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC',
-			   'CTG', 'CTT', 'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG',
-			   'TTT', 'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC', 'CTG', 'CTT',
-			   'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT']
+	channel96 =     channel96 = [
+        # 1. C>A
+        'ACA', 'ACC', 'ACG', 'ACT', 'CCA', 'CCC', 'CCG', 'CCT', 
+        'GCA', 'GCC', 'GCG', 'GCT', 'TCA', 'TCC', 'TCG', 'TCT', 
+        # 2. C>G
+        'ACA', 'ACC', 'ACG', 'ACT', 'CCA', 'CCC', 'CCG', 'CCT', 
+        'GCA', 'GCC', 'GCG', 'GCT', 'TCA', 'TCC', 'TCG', 'TCT', 
+        # 3. C>T
+        'ACA', 'ACC', 'ACG', 'ACT', 'CCA', 'CCC', 'CCG', 'CCT', 
+        'GCA', 'GCC', 'GCG', 'GCT', 'TCA', 'TCC', 'TCG', 'TCT', 
+        # 4. T>A
+        'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC', 'CTG', 'CTT', 
+        'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT', 
+        # 5. T>C
+        'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC', 'CTG', 'CTT', 
+        'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT', 
+        # 6. T>G
+        'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC', 'CTG', 'CTT', 
+        'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT'
+    ]
 	
 	## plot the normalized version:
 	if norm:
@@ -280,15 +322,15 @@ def SBS96_plot(sig, label="", name="", file=None, norm=False,
 		# Handle xticks
 		if xticks_label:
 			ax.set_xticks(range(channel))
-			ax.set_xticklabels(channel96, rotation=90, ha="center", va="center", size=7)
+			ax.set_xticklabels(channel96, rotation=90, ha="center", va="center", size=s*1.15)
 		else:
 			ax.set_xticks([])
 			ax.set_xticklabels([])
 
 		if ylim is not None:
-			ax.set_ylim(0, int(ylim * 1.15))
+			ax.set_ylim(0, math.ceil(ylim * 1.15))
 		else:
-			ax.set_ylim(0, int(np.max(sig) * 1.15))
+			ax.set_ylim(0, math.ceil(np.max(sig) * 1.15))
 		
 		if np.round(np.sum(sig)) != 1:
 			ax.annotate(
@@ -299,9 +341,9 @@ def SBS96_plot(sig, label="", name="", file=None, norm=False,
 				verticalalignment='top'
 			)
 		ax.set_ylabel("Number of\nSBSs", size=s*2)
-		ax.annotate(name, (90 - len(name), np.max(sig) * 0.95), size=s)
+		ax.annotate(name, (90 - len(name), np.max(sig) * 0.95), size=s*1.15)
 	
-	ax.tick_params(axis='y', labelsize=s)
+	ax.tick_params(axis='y', labelsize=s*1.15)
 	
 	## plot the bar annotation (Top colored strips):
 	text_col = ["w","w","w","black","black","black"]
