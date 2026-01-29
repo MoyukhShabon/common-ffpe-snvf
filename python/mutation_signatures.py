@@ -31,68 +31,6 @@ from matplotlib.ticker import MaxNLocator
 from common import snv_filter
 import threading
 
-def import_formatted_vcf(vcf_path, sample_name, snv_only = True, normal_chr=True) -> pl.DataFrame:
-	
-	"""
-	Import a VCF or SNV file and return a Polars DataFrame with standardized columns.
-
-	Parameters
-	----------
-	vcf_path : str
-		Path to the VCF or SNV file.
-	snv_only : bool, optional
-		If True, filter to include only single nucleotide variants (default: True).
-
-	Returns
-	-------
-	pl.DataFrame
-		DataFrame with columns: chrom, pos, ref, alt, sample_id.
-		Multi-allelic variants are exploded into separate rows.
-	"""
-	
-	allowed_chroms = [f"chr{i}" for i in range(1, 23)] + ["chrX", "chrY"]
-	
-	# print(sample_name)
-	
-	if vcf_path.endswith(".vcf") or vcf_path.endswith(".vcf.gz"):
-		vcf = (
-			pl.read_csv(vcf_path, separator="\t", comment_prefix="##", columns=["#CHROM", "POS", "REF", "ALT"])
-			# .filter(pl.col("#CHROM").is_in(allowed_chroms))
-			.rename({
-						"#CHROM" : "chrom",
-						"POS" : "pos", 
-						"REF": "ref", 
-						"ALT" : "alt"
-			})
-		)
-	elif (vcf_path.endswith(".snv") | vcf_path.endswith(".tsv")):
-		vcf = pl.read_csv(vcf_path, separator="\t", infer_schema_length=10000)
-		vcf = vcf.rename({col: col.lower() for col in vcf.columns})
-		
-	
-	vcf = (
-		vcf.with_columns([
-			pl.lit(sample_name).alias("sample_id"),
-			pl.col("ref").str.to_uppercase(),
-			pl.col("alt").str.to_uppercase()
-		])
-		# .filter(pl.col("chrom").is_in(allowed_chroms))
-		.with_columns(
-			pl.col("alt").str.split(",")
-		)
-		.explode("alt")
-	)
-	
-	if normal_chr:
-		vcf = vcf.filter(pl.col("chrom").is_in(allowed_chroms))
- 
-	if snv_only:
-		vcf = vcf.filter((pl.col("alt").str.len_chars() == 1) & (pl.col("ref").str.len_chars() == 1))
-	
-	return vcf
-
-
-
 def get_context(row, genome, lock):
     chrom = row["chrom"]
     pos = row["pos"]
