@@ -290,28 +290,25 @@ def plot_sbs96_signature(
     bar_width: float = 1, 
     xticks_label: bool = False, 
     grid: float = 0.2, 
-    s: int = 10, 
+    base_fontsize: int = 10,
     ylim: Optional[float] = None, 
     ax: Optional[Axes] = None
 ) -> None:
     """
     Plots a standard 96-channel Single Base Substitution (SBS) signature.
-
-    Args:
-        sig (np.ndarray): Array of 96 counts or frequencies.
-        label (str): Label for the Y-axis side strip.
-        name (str): Title/Annotation inside the plot.
-        file (Optional[str]): Path to save the file. If None, shows plot.
-        norm (bool): If True, normalizes the signature to sum to 1.
-        width (int): Figure width.
-        height (int): Figure height.
-        bar_width (float): Width of bars.
-        xticks_label (bool): Whether to show x-axis labels (trinucleotides).
-        grid (float): Grid line width.
-        s (int): Base font size scale.
-        ylim (Optional[float]): Manual Y-axis limit.
-        ax (Optional[Axes]): Matplotlib Axes object. If None, creates new figure.
     """
+    
+    # Font Configuration ---
+    fonts = {
+        "xtick": base_fontsize * 0.7,      # Trinucleotide labels (very small)
+        "ytick": base_fontsize * 1.2,      # Y-axis numbers
+        "title": base_fontsize * 1.2,      # Inner plot annotation
+        "stats": base_fontsize * 1.5,      # "Total Count" text
+        "strip": base_fontsize * 1.8,      # Top colored strip labels (C>A, etc)
+        "axis_label": base_fontsize * 2.0, # Y-axis label ("Frequency")
+        "side_label": base_fontsize * 2.2  # side-label ("Frequency")
+    }
+
     channel = 96
     col_set = ['deepskyblue', 'black', 'red', 'lightgrey', 'yellowgreen', 'pink']
     col_list = []
@@ -326,46 +323,38 @@ def plot_sbs96_signature(
     else:
         is_standalone = False
 
-    # Set theme
+    # Set theme and specific rcParams for this plot
     sns.set_theme(style="whitegrid", color_codes=True,
                   rc={"grid.linewidth": grid, 'grid.color': '.7', 'ytick.major.size': 2,
                       'axes.edgecolor': '.3', 'axes.linewidth': 1.35})
 
     channel6 = ['C>A', 'C>G', 'C>T', 'T>A', 'T>C', 'T>G']
-    channel96 = [
-        # 1. C>A
-        'ACA', 'ACC', 'ACG', 'ACT', 'CCA', 'CCC', 'CCG', 'CCT',
-        'GCA', 'GCC', 'GCG', 'GCT', 'TCA', 'TCC', 'TCG', 'TCT',
-        # 2. C>G
-        'ACA', 'ACC', 'ACG', 'ACT', 'CCA', 'CCC', 'CCG', 'CCT',
-        'GCA', 'GCC', 'GCG', 'GCT', 'TCA', 'TCC', 'TCG', 'TCT',
-        # 3. C>T
-        'ACA', 'ACC', 'ACG', 'ACT', 'CCA', 'CCC', 'CCG', 'CCT',
-        'GCA', 'GCC', 'GCG', 'GCT', 'TCA', 'TCC', 'TCG', 'TCT',
-        # 4. T>A
-        'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC', 'CTG', 'CTT',
-        'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT',
-        # 5. T>C
-        'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC', 'CTG', 'CTT',
-        'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT',
-        # 6. T>G
-        'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC', 'CTG', 'CTT',
-        'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT'
-    ]
+    bases = "ACGT"
+    muts = ["C>A", "C>G", "C>T", "T>A", "T>C", "T>G"]
+    channel96 = []
+    for m in muts:
+        ref = m[0]
+        for b1 in bases:
+            for b2 in bases:
+                channel96.append(f"{b1}{ref}{b2}")
+
+    # --- Plotting Logic ---
 
     # Plot Normalized Version
     if norm:
         normed_sig = sig / np.sum(sig)
         ax.bar(range(channel), normed_sig, width=bar_width, color=col_list)
         ax.set_xticks(range(channel))
+        
         if xticks_label:
-            ax.set_xticklabels(channel96, rotation=90, ha="center", va="center", size=7)
+            ax.set_xticklabels(channel96, rotation=90, ha="center", va="center", 
+                               fontsize=fonts["xtick"])
         else:
             ax.set_xticklabels([])
 
         ax.set_ylim(0, np.max(normed_sig) * 1.15)
-        ax.annotate(name, (90 - len(name), np.max(sig) * 0.95), size=s)
-        ax.set_ylabel("Frequency")
+        ax.annotate(name, (90 - len(name), np.max(sig) * 0.95), fontsize=fonts["title"])
+        ax.set_ylabel("Frequency", fontsize=fonts["axis_label"])
 
     # Plot Count Version
     else:
@@ -374,7 +363,8 @@ def plot_sbs96_signature(
 
         if xticks_label:
             ax.set_xticks(range(channel))
-            ax.set_xticklabels(channel96, rotation=90, ha="center", va="center", size=s * 1.15)
+            ax.set_xticklabels(channel96, rotation=90, ha="center", va="center", 
+                               fontsize=fonts["xtick"])
         else:
             ax.set_xticks([])
             ax.set_xticklabels([])
@@ -385,19 +375,21 @@ def plot_sbs96_signature(
             ax.set_ylim(0, math.ceil(np.max(sig) * 1.15))
 
         if np.round(np.sum(sig)) != 1:
+            stats_text = f"Total Count : {np.sum(sig):,}\nC>T Count : {np.sum(sig[32:48]):,}"
             ax.annotate(
-                f"Total Count : {np.sum(sig):,}\nC>T Count : {np.sum(sig[32:48]):,}",
+                stats_text,
                 xy=(0.02, 0.95),
                 xycoords='axes fraction',
-                size=s * 1.5,
+                fontsize=fonts["stats"],
                 verticalalignment='top'
             )
-        ax.set_ylabel("Number of\nSBSs", size=s * 2)
-        ax.annotate(name, (90 - len(name), np.max(sig) * 0.95), size=s * 1.15)
+        
+        ax.set_ylabel("Number of\nSBSs", fontsize=fonts["axis_label"])
+        ax.annotate(name, (90 - len(name), np.max(sig) * 0.95), fontsize=fonts["title"])
 
-    ax.tick_params(axis='y', labelsize=s * 1.15)
+    ax.tick_params(axis='y', labelsize=fonts["ytick"])
 
-    # Plot Top Colored Strips
+    # --- Annotations (Top Strips) ---
     text_col = ["w", "w", "w", "black", "black", "black"]
     for i in range(6):
         left, width_rect = 0 + 1 / 6 * i + 0.001, 1 / 6 - 0.002
@@ -409,12 +401,14 @@ def plot_sbs96_signature(
         p.set_transform(ax.transAxes)
         p.set_clip_on(False)
         ax.add_patch(p)
+        
+        # Using fonts["strip"] here
         ax.text(0.5 * (left + right), 0.5 * (bottom + top), channel6[i],
-                color=text_col[i], weight='bold', size=s * 1.8,
+                color=text_col[i], weight='bold', fontsize=fonts["strip"],
                 horizontalalignment='center', verticalalignment='center',
                 transform=ax.transAxes)
 
-    # Plot Side Label
+    # --- Side Label ---
     if label != "":
         left, width_rect = 1.003, 0.05
         bottom, height_rect = 0, 1
@@ -425,7 +419,10 @@ def plot_sbs96_signature(
         p.set_transform(ax.transAxes)
         p.set_clip_on(False)
         ax.add_patch(p)
-        ax.text(0.505 * (left + right), 0.5 * (bottom + top), label, color="black", size=s * 2,
+        
+        # Using fonts["axis_label"] here
+        ax.text(0.505 * (left + right), 0.5 * (bottom + top), label, color="black", 
+                fontsize=fonts["axis_label"],
                 horizontalalignment='center', verticalalignment='center',
                 transform=ax.transAxes, rotation=90)
 
@@ -439,4 +436,4 @@ def plot_sbs96_signature(
         else:
             plt.show()
             plt.close()
-
+            
