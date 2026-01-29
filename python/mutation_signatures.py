@@ -267,7 +267,7 @@ def SBS96_plot(sig, label = "", name = "", file = None, norm = False,
 		plt.bar(range(channel), normed_sig , width = bar_width, color = col_list)
 		plt.xticks(rotation = 90, size = 7, weight = 'bold')
 		if ylim is not None:
-			plt.ylim(0, ylim)
+			plt.ylim(0, int(ylim * 1.15))
 		else:
 			plt.ylim (0, np.max(normed_sig) * 1.15)
 		plt.annotate (name,(90 - len(name), np.max(sig) * 0.95), size = s)
@@ -278,9 +278,9 @@ def SBS96_plot(sig, label = "", name = "", file = None, norm = False,
 		plt.bar(range(channel), sig , width = bar_width, color =col_list)
 		plt.xticks(rotation = 90, size = 7, weight = 'bold')
 		if ylim is not None:
-			plt.ylim(0, ylim * 1.15)
+			plt.ylim(0, int(ylim * 1.15))
 		else:
-			plt.ylim(0,np.max(sig) * 1.15)
+			plt.ylim(0, int(np.max(sig) * 1.15))
 		
 		if  np.round(np.sum (sig)) != 1:
 			plt.annotate(
