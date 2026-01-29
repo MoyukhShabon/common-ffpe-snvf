@@ -26,6 +26,7 @@ import pysam
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 from common import snv_filter
 
 def import_formatted_vcf(vcf_path, sample_name, snv_only = True, normal_chr=True) -> pl.DataFrame:
@@ -217,36 +218,33 @@ def create_96c_mutation_counts(snv_96c):
 
 
 	
-def SBS96_plot(sig, label = "", name = "", file = None, norm = False,
-			   width = 10, height = 2, bar_width = 1, 
-			   xticks_label = False, grid = 0.2, s = 10, ylim = None):
+def SBS96_plot(sig, label="", name="", file=None, norm=False,
+			   width=10, height=2, bar_width=1, 
+			   xticks_label=False, grid=0.2, s=10, ylim=None, ax=None):
 	"""
-	This function plots 96-channel profile for a given signature or mutational catalogue.   
-	Required:
-		sig: 96-channel mutation counts/probabilities
-	Optional arguments(default values see above):
-		label: to identify the plot, e.g. sample ID
-		name: to add extra information inside of the plot, e.g. "Biological"
-		file: file name where to save the plot if given
-		norm: to normlize provided 96-channel vector or not
-		width: width of the plot
-		height: height of the plot
-		bar_width: bar_width of the plot
-		xticks_label: to show the xticks channel information or not
-		grid: grid of the plot
-		s: fontsize of the figure main text    
+	Modified to accept an 'ax' argument for subplotting.
 	"""
 	
 	channel = 96
 	col_set = ['deepskyblue','black','red','lightgrey','yellowgreen','pink']
 	col_list = []
-	for i in range (len(col_set)):
+	for i in range(len(col_set)):
 		col_list += [col_set[i]] * 16
 	
-	# This ensures we never draw on top of an old plot
-	plt.figure(figsize=(width, height))
-	sns.set_theme(style="whitegrid", color_codes=True, rc={"grid.linewidth": grid, 'grid.color': '.7', 'ytick.major.size': 2,
-												 'axes.edgecolor': '.3', 'axes.linewidth': 1.35,})
+	# LOGIC CHANGE: If no ax is provided, create a new figure (standalone mode)
+	# If ax IS provided, use it (subplot mode)
+	if ax is None:
+		fig = plt.figure(figsize=(width, height))
+		ax = plt.gca()
+		is_standalone = True
+	else:
+		is_standalone = False
+
+	# Set theme (Note: this sets global theme, might affect other plots if not careful)
+	sns.set_theme(style="whitegrid", color_codes=True, 
+				  rc={"grid.linewidth": grid, 'grid.color': '.7', 'ytick.major.size': 2,
+					  'axes.edgecolor': '.3', 'axes.linewidth': 1.35,})
+	
 
 	channel6 = ['C>A','C>G','C>T','T>A','T>C','T>G']
 	channel96 = ['ACA', 'ACC', 'ACG', 'ACT', 'CCA', 'CCC', 'CCG', 'CCT', 'GCA',
@@ -257,90 +255,98 @@ def SBS96_plot(sig, label = "", name = "", file = None, norm = False,
 			   'TCC', 'TCG', 'TCT', 'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC',
 			   'CTG', 'CTT', 'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG',
 			   'TTT', 'ATA', 'ATC', 'ATG', 'ATT', 'CTA', 'CTC', 'CTG', 'CTT',
-			   'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT', 'ATA',
-			   'ATC', 'ATG', 'ATT', 'CTA', 'CTC', 'CTG', 'CTT', 'GTA', 'GTC',
-			   'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT']
+			   'GTA', 'GTC', 'GTG', 'GTT', 'TTA', 'TTC', 'TTG', 'TTT']
 	
 	## plot the normalized version:
 	if norm:
 		normed_sig = sig / np.sum(sig)
-		plt.bar(range(channel), normed_sig , width = bar_width, color = col_list)
-		plt.xticks(rotation = 90, size = 7, weight = 'bold')
-		if ylim is not None:
-			plt.ylim(0, int(ylim * 1.15))
+		ax.bar(range(channel), normed_sig, width=bar_width, color=col_list)
+		# Handle xticks
+		ax.set_xticks(range(channel))
+		if xticks_label:
+			ax.set_xticklabels(channel96, rotation=90, ha="center", va="center", size=7)
 		else:
-			plt.ylim (0, np.max(normed_sig) * 1.15)
-		plt.annotate (name,(90 - len(name), np.max(sig) * 0.95), size = s)
-		plt.ylabel("Frequency")
+			ax.set_xticklabels([])
+			
+		ax.set_ylim(0, np.max(normed_sig) * 1.15)
+		ax.annotate(name, (90 - len(name), np.max(sig) * 0.95), size=s)
+		ax.set_ylabel("Frequency")
 
 	## plot the original version:
 	else:
-		plt.bar(range(channel), sig , width = bar_width, color =col_list)
-		plt.xticks(rotation = 90, size = 7, weight = 'bold')
-		if ylim is not None:
-			plt.ylim(0, int(ylim * 1.15))
-		else:
-			plt.ylim(0, int(np.max(sig) * 1.15))
+		ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+		ax.bar(range(channel), sig, width=bar_width, color=col_list)
 		
-		if  np.round(np.sum (sig)) != 1:
-			plt.annotate(
+		# Handle xticks
+		if xticks_label:
+			ax.set_xticks(range(channel))
+			ax.set_xticklabels(channel96, rotation=90, ha="center", va="center", size=7)
+		else:
+			ax.set_xticks([])
+			ax.set_xticklabels([])
+
+		if ylim is not None:
+			ax.set_ylim(0, int(ylim * 1.15))
+		else:
+			ax.set_ylim(0, int(np.max(sig) * 1.15))
+		
+		if np.round(np.sum(sig)) != 1:
+			ax.annotate(
 				f"Total Count : {np.sum(sig):,}\nC>T Count : {np.sum(sig[32:48]):,}", 
 				xy=(0.02, 0.95), 
 				xycoords='axes fraction', 
 				size=s*1.5,
 				verticalalignment='top'
 			)
-		plt.ylabel("Number of\nSBSs", size = s*2)
-		plt.annotate (name,(90 - len(name), np.max(sig) * 0.95), size = s)
+		ax.set_ylabel("Number of\nSBSs", size=s*2)
+		ax.annotate(name, (90 - len(name), np.max(sig) * 0.95), size=s)
 	
-	if xticks_label:
-		plt.xticks(range(channel), channel96, rotation = 90, ha = "center", va= "center",  size = 7)
-	else:
-		plt.xticks([], [])
-		
-	plt.yticks( va= "center",  size = s)
+	ax.tick_params(axis='y', labelsize=s)
 	
-	## plot the bar annotation:
+	## plot the bar annotation (Top colored strips):
 	text_col = ["w","w","w","black","black","black"]
 	for i in range(6):       
 		left, width = 0 + 1/6 * i + 0.001, 1/6 - 0.002
 		bottom, height = 1.003, 0.15
 		right = left + width
 		top = bottom + height
-		ax = plt.gca()
-		p = plt.Rectangle((left, bottom), width, height, fill=True, color = col_set[i])
+		
+		# Use ax.add_patch instead of plt.gca().add_patch
+		p = plt.Rectangle((left, bottom), width, height, fill=True, color=col_set[i])
 		p.set_transform(ax.transAxes)
 		p.set_clip_on(False)
 		ax.add_patch(p)
 		ax.text(0.5 * (left + right), 0.5 * (bottom + top), channel6[i], 
-				color = text_col[i], weight='bold',size = s*1.8,
-				horizontalalignment='center',verticalalignment='center', 
+				color=text_col[i], weight='bold', size=s*1.8,
+				horizontalalignment='center', verticalalignment='center', 
 				transform=ax.transAxes)
 	
-	## plot the name annotation
+	## plot the name annotation (Side label)
 	if label != "":
 		left, width = 1.003, 0.05
 		bottom, height = 0, 1
 		right = left + width
 		top = bottom + height
-		ax = plt.gca()
-		p = plt.Rectangle((left, bottom), width, height, fill = True, color = "silver",alpha = 0.3)
+		
+		p = plt.Rectangle((left, bottom), width, height, fill=True, color="silver", alpha=0.3)
 		p.set_transform(ax.transAxes)
 		p.set_clip_on(False)
 		ax.add_patch(p)
-		ax.text(0.505 * (left + right), 0.5 * (bottom + top), label, color = "black", size = s*2,
-				horizontalalignment='center',verticalalignment='center',
-				transform=ax.transAxes , rotation = 90)
+		ax.text(0.505 * (left + right), 0.5 * (bottom + top), label, color="black", size=s*2,
+				horizontalalignment='center', verticalalignment='center',
+				transform=ax.transAxes, rotation=90)
 
 	ax.margins(x=0.002, y=0.002)
-	plt.tight_layout()
-	if file:
-		plt.savefig(file, bbox_inches = "tight", dpi = 300)
-		plt.close()
-	else:
-		plt.show()
-		plt.close()
-
+	
+	# Only save/show if we are NOT in subplot mode
+	if is_standalone:
+		plt.tight_layout()
+		if file:
+			plt.savefig(file, bbox_inches="tight", dpi=300)
+			plt.close()
+		else:
+			plt.show()
+			plt.close()
 	
 ## A polars mask for filtering C:G>T:A mutations. Invertable using ~
 ## Usage df.filter(ct_mask) or df.filter(~ct_mask). Where df: pl.DataFrame
