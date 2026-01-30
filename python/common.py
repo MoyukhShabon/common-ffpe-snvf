@@ -1,8 +1,27 @@
 import polars as pl
 import numpy as np
+import os
 from scipy.stats import false_discovery_control
 from sklearn.metrics import confusion_matrix
 
+
+def return_path_if_exists(path: str, abs=False) -> str:
+	"""
+	Function that returns a path if it exists, otherwise raises an error.
+	The main point is to prevent downstream error, especially then preparing
+	inputs for other tools which involves file paths.
+
+	:param path: Path to a file
+	:type path: str
+	:param abs: If True returns absolute path
+	:type abs: bool
+	:return: DataFrame containing the variants
+	:rtype: str
+	"""
+	if os.path.exists(path):
+		return os.path.abspath(path) if abs else path
+	else:
+		raise FileNotFoundError(f"File not found: {path}")
 
 def read_variants(path:str, columns: list = ["#CHROM", "POS", "REF", "ALT"]) -> pl.DataFrame:
 	"""
@@ -20,8 +39,9 @@ def read_variants(path:str, columns: list = ["#CHROM", "POS", "REF", "ALT"]) -> 
 	:rtype: DataFrame
 	"""
 	variants = (
-		pl.read_csv(path, separator="\t", comment_prefix="##", infer_schema_length=1000, columns=columns)
+		pl.read_csv(path, separator="\t", comment_prefix="##", infer_schema_length=1000, columns=columns, null_values=["."])
 		.rename(lambda x: x.lstrip("#").lower())
+		.with_columns(pl.col("chrom").str.strip_chars())
 		.with_columns(pl.col("alt").str.split(","))
 		.explode("alt")
 	)
@@ -64,8 +84,8 @@ def natural_sort_variants(df: pl.DataFrame, chr_col: str = "chrom", pos_col: str
 			.str.replace("chr", "") # Remove 'chr' prefix
 			.str.replace("X", "23") # Handle Sex chromosomes
 			.str.replace("Y", "24")
-			.str.replace("M", "25") # Handle Mitochondria if present
 			.str.replace("MT", "26")
+			.str.replace("M", "25") # Handle Mitochondria if present
 			.cast(pl.Int32, strict=False) # Convert to Integer (strict=False turns unknown contigs to null)
 			.fill_null(999) # Put weird contigs at the end
 			.alias("chr_rank")
@@ -149,7 +169,7 @@ def fdr_cut_pred(df: pl.DataFrame, score_col: str, fp_cut: float = 0.5) -> pl.Da
 		)
 	
 
-	# 4. Combine and sort
+	## Combine and sort
 	final_df = pl.concat([df_ct, df_nct], how="vertical").pipe(natural_sort_variants)
 	
 	return final_df
