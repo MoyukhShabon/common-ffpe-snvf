@@ -78,7 +78,7 @@ def annotate_simple_repeats(mut_info: pl.DataFrame, simple_repeats_df: pl.DataFr
 	# Sort both DataFrames
 	# join_asof requires the 'on' column (Pos/start) to be sorted within the 'by' groups (Chr).
 	# Sorting by ["Chr", "Pos"] achieves this and keeps the data human-readable.
-	variants_sorted = natural_sort_variants(mut_info, chr_col="Chr")
+	variants_sorted = natural_sort_variants(mut_info, chr_col="Chr", pos_col="Pos")
 	repeats_sorted = simple_repeats_df.sort(["chrom", "start"])
 
 	# Perform the ASOF Join

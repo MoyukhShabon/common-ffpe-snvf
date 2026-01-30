@@ -3,7 +3,7 @@
 This module provides functions for processing variant call files (VCF/SNV),
 extracting mutation contexts, and generating mutation signature matrices (e.g., 96-channel).
 
-It utilizes Polars for high-performance data manipulation and Pysam for 
+It utilizes Polars for high-performance data wrangling and Pysam for 
 efficient FASTA querying. Thread-local storage is used to handle Pysam's 
 non-thread-safe C-backend during parallel Polars execution.
 
@@ -227,8 +227,9 @@ def build_mutation_count_matrix(snv_96c: pl.DataFrame, sample_name_col: str = "s
 		sample_name_col (str): Name if column with sample_name annotation, if exists.
 
 	Returns:
-		pl.DataFrame: A matrix where rows are (MutationType, Trinucleotide) and 
-					  columns are counts (or sample names if multiple samples exist).
+		pl.DataFrame: A matrix where rows are the Trinucleotide for each canonicalized mutations and 
+					the columns are ID Rows (Mutataion Type and Trinucleotide) and counts or counts for 
+					each sample per columns if multiple samples exist.
 	"""
 	mutation_types = ["C>A", "C>G", "C>T", "T>A", "T>C", "T>G"]
 	bases = ["A", "C", "G", "T"]
