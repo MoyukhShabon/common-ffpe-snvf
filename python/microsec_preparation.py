@@ -201,6 +201,7 @@ def make_mut_info(
     if ct_only:
         mut_info = ct_filter(mut_info)
 
+    ## MicroSEC expects these column names
     mut_info = mut_info.rename({
         "chrom": "Chr",
         "pos": "Pos",
@@ -273,3 +274,32 @@ def make_mut_info(
     ])
 
     return mut_info
+
+
+def make_sample_info(
+		sample_name: str,
+		mut_info_path: str,
+		bam_path: str,
+		ref_path: str,
+		simple_repeat_path: str,
+		genome_build: str = "hg38",
+		adapter_1 = "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA",
+		adapter_2 = "AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT"
+	) -> pl.DataFrame:
+
+	read_length = get_read_length(bam_path)
+
+	info = {
+		"sample_name": sample_name,
+		"mutation_file": mut_info_path,
+		"bam_file": bam_path,
+		"read_length": read_length,
+		"adapter_1": adapter_1,
+		"adapter_2": adapter_2, # Can be None/NA
+		"genome_build": genome_build, # e.g. "hg38" or "Human"
+		"panel_name": "TOP",
+		"ref_genome": ref_path, # Path to fasta if needed for CRAM
+		"simple_repeat_bed": simple_repeat_path # Optional
+	}
+
+	return pl.DataFrame(info)
