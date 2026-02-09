@@ -270,7 +270,7 @@ extract_ad <- function(vcf, sample_name, annotate_vaf=FALSE) {
 
 	ad <- matrix(unlist(ad.list), ncol = 2, byrow=TRUE);
 	d <- cbind(vcf[, c("chrom", "pos", "ref", "alt")], ad_ref=ad[,1], ad_alt=ad[,2]);
-	d$chrom <- sub("chr", "", d$chrom, fixed=TRUE);
+	# d$chrom <- sub("chr", "", d$chrom, fixed=TRUE);
 	if (annotate_vaf){
 		d$vaf <- d$ad_alt / (d$ad_ref + d$ad_alt)
 	}
@@ -307,7 +307,8 @@ run_macni <- function(vcf, sample_name, thresh=0.9, alpha.ghomo = 100, alpha.ghe
 		log = FALSE
 	)
 
-	data$is_somatic <- ifelse(data$macni_pp > thresh, TRUE, FALSE)
+	data$is_somatic <- ifelse(data$macni_pp > thresh & !(is.nan(data$macni_pp) & data$vaf == 1), TRUE, FALSE)
+	# data$chrom <- paste0("chr", data$chrom)
 
 	return(data)
 }
