@@ -49,17 +49,19 @@ ct_filter <- function(d, ref_col = "ref", alt_col = "alt", invert = FALSE) {
 	}
 }
 
-#' Ideafix only runs on variants with VAF < 0.3. Essentially, calling them non-demaination (real mutations)
-#' Thus, the filtered variants are restored with a score of 0 i.e highest confidence non-deaminations
-#' @param result [data.frame] This is the result from ideafix's classify_variants function
+#' Ideafix only runs on variants with VAF < 0.3 and Filter == PASS. 
+#' Essentially, calling them VAF>0.3 non-demaination (real mutations) and Filter != PASS as artifacts.
+#' Thus, the filtered variants are restored with a score of 0 i.e highest confidence non-deaminations.
+#' @param result [data.frame] This is the result from ideafix's classify_variants function.
 #' @param vcf [string] path to the vcf file for the sample being analyzed
+#' @param ct_filter (logical) if TRUE (default) retains only C:G>T:A variants
 #' @return [data.frame] Table with the VAF filtered variants restored
 postprocess <- function(result, vcf, ct_filter=TRUE) {
 	# changes ideafix result col names to lowercase (chrom	pos	ref	alt	deam_score	deamination)
 	names(result) <- tolower(names(result))
 
 	# Reads all variants from vcf and applies a C>T filter if specified
-	all_vars <- read_vcf(vcf, c("chrom", "pos", "ref", "alt"))
+	all_vars <- read_vcf(vcf, c("chrom", "pos", "ref", "alt", "filter"))
 	if (apply_ct_filter) {
     	all_vars <- ct_filter(all_vars)
   	}
@@ -67,8 +69,17 @@ postprocess <- function(result, vcf, ct_filter=TRUE) {
 	# Merges the result table with all variants in the to restore variants filtered out by the VAF<0.30 filter
 	result_all_var <- merge(x = all_vars, y = result, by = c("chrom", "pos", "ref", "alt"), all.x = TRUE)
 	# Score is deamination probability. Therefore hard filtered variants are set to 0 i.e non-deamination
-	result_all_var$deam_score <- if_else(is.na(result_all_var$deam_score), 0, result_all_var$deam_score)
-	result_all_var$deamination <- if_else(is.na(result_all_var$deamination), "non-deamination_vaf-filter", result_all_var$deamination)
+	result_all_var$deam_score <- ifelse(
+		!is.na(result_all_var$deam_score),
+		result_all_var$deam_score,
+		ifelse(result_all_var$filter == "PASS", 0, 1)
+	)
+
+	result_all_var$deamination <- ifelse(
+		!is.na(result_all_var$deamination),
+		result_all_var$deamination,
+		ifelse(result_all_var$filter == "PASS", "vaf>0.3", "non-PASS")
+	)
 
 	return(result_all_var)
 }
@@ -79,6 +90,7 @@ p <- add_argument(p, "--vcf", help = "path to the VCF file")
 p <- add_argument(p, "--ref", help = "path to the reference genome")
 p <- add_argument(p, "--outdir", help = "Output directory for the results", default = ".")
 p <- add_argument(p, "--sample_name", help = "Name of Sample being filtered", default = NA)
+p <- add_argument(p, "--run-rf", help = "Name of Sample being filtered", default = FALSE)
 argv <- parse_args(p)
 
 # Assign Variables
@@ -99,7 +111,7 @@ descriptors <- filter(descriptors, if_all(where(is.numeric), ~ !is.infinite(.)))
 qwrite(descriptors, file.path(outdir, sprintf("%s.ideafix.descriptors.tsv", sample_name)))
 
 
-## Ideafix imposes an AF <= 0.3 filter. If no variants pass that then an empty descriptor df is returned.
+## Ideafix imposes an AF <= 0.3 and Filter == PASS. If no variants pass these then an empty descriptor data.frame is returned.
 if(nrow(descriptors) == 0){
 	message("No variant descriptors pass the filters")
 	quit(save = "no")
@@ -109,12 +121,16 @@ message(cat("\n\tRunning IdeaFix XGBoost Model \n"))
 predictions_xgboost <- classify_variants(variant_descriptors = descriptors, algorithm = "XGBoost")
 predictions_xgboost <- postprocess(predictions_xgboost)
 
-# message(cat("\n\tRunning IdeaFix RF Model \n"))
-# predictions_rf <- classify_variants(variant_descriptors = descriptors, algorithm = "RF")
-# predictions_rf <- postprocess(predictions_rf)
-
 message(cat(sprintf("\n\tWriting outputs to: %s \n", outdir)))
 qwrite(predictions_xgboost, file.path(outdir, sprintf("%s.ideafix.tsv", sample_name)))
-# qwrite(predictions_rf, file.path(outdir, sprintf("%s.ideafix-rf.tsv", sample_name)))
+
+
+if (argv$run_rf){
+	message(cat("\n\tRunning IdeaFix RF Model \n"))
+	predictions_rf <- classify_variants(variant_descriptors = descriptors, algorithm = "RF")
+	predictions_rf <- postprocess(predictions_rf)
+	# qwrite(predictions_rf, file.path(outdir, sprintf("%s.ideafix-rf.tsv", sample_name)))
+
+}
 
 message(cat("\n\tComplete"))
