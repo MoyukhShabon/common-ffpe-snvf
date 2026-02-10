@@ -1,3 +1,7 @@
+library(vcfR)
+library(tidyr)
+library(dplyr)
+
 log_sum_exp <- function(x) {
 	x.max <- max(x);
 	log(sum(exp(x - x.max))) + x.max
@@ -278,16 +282,77 @@ extract_ad <- function(vcf, sample_name, annotate_vaf=FALSE) {
 	return(d)
 }
 
+#' Read a VCF into a data.frame
+#'
+#' @description
+#' Read a VCF file using vcfR::read.vcfR and extract AD, F1R2 and F2R1 for a specific sample. 
+#' Splits AD, F1R2 and F2R1 genotype fields into reference and alternate counts.
+#' Computes VAF and orientation-bias score (SOB).
+#'
+#' @param vcf_path (string) Path to the VCF file.
+#' @param sample_name (string) Name to assign to the sample/column in the output.
+#'
+#' @return (data.frame) Columns:
+#'   chrom, pos, ref, alt, filter,
+#'   ad_ref, ad_alt, f1r2_ref, f1r2_alt, f2r1_ref, f2r1_alt,
+#'   vaf, sob, sample_name
+#'
+#' @examples
+#' # read_vcf("sample.vcf", "sample1")
+read_vcf <- function(vcf_path, sample_name){
+
+	vcf0 <- read.vcfR(vcf_path, verbose = FALSE)
+	vcf1 <- data.frame(
+		chrom = getCHROM(vcf0),
+		pos = getPOS(vcf0),
+		ref = getREF(vcf0),
+		alt = getALT(vcf0),
+		filter = getFILTER(vcf0),
+		ad = as.vector(extract.gt(vcf0, element = "AD")[, sample_name]),
+		f1r1 = as.vector(extract.gt(vcf0, element = "F1R2")[, sample_name]),
+		f2r1 = as.vector(extract.gt(vcf0, element = "F2R1")[, sample_name])
+	)
+
+	# Split AD, F1R2, and F2R1 fields into ref and alt
+	vcf1 <- separate(vcf1, ad, into = c("ad_ref", "ad_alt"), sep=",", extra="merge", convert = TRUE)
+	vcf1 <- separate(vcf1, f1r1, into = c("f1r2_ref", "f1r2_alt"), sep=",", extra="merge", convert = TRUE)
+	vcf1 <- separate(vcf1, f2r1, into = c("f2r1_ref", "f2r1_alt"), sep=",", extra="merge", convert = TRUE)
+
+	# Split multiallelic sites to biallelic
+	vcf1 <- separate_rows(vcf1, alt, ad_alt, f1r2_alt, f2r1_alt, sep = ",")
+
+	# Ensure columns numeric columns are numeric
+	vcf1 <- mutate(
+		vcf1,
+		ad_ref = as.numeric(ad_ref),
+		ad_alt = as.numeric(ad_alt),
+		f1r2_ref = as.numeric(f1r2_ref),
+		f1r2_alt = as.numeric(f1r2_alt),
+		f2r1_ref = as.numeric(f2r1_ref),
+		f2r1_alt = as.numeric(f2r1_alt)
+	)
+
+	vcf1$vaf <- with(vcf1, ad_alt/(ad_ref + ad_alt))
+	vcf1$sob <- with(vcf1, abs((f1r2_alt - f2r1_alt)/(f1r2_alt + f2r1_alt)))
+	# # Some variants may have a SOB score of NaN as both F1R2_alt and F2R1_alt are 0.
+	# # This is likey due to the variant being called from reads with missing mates
+
+	vcf1$sample_name <- sample_name
+
+	return(vcf1)
+
+}
+
 #' Extract Allelic Depth (count of reads supporting ref and alt allele)
-#' @param vcf (data.frame) VCF read using qread from io package.
+#' @param vcf (string) path to VCF file
 #' @param sample_name (string) name of tumor sample name in the VCF.
 #' @param tresh (float) posterior probability threshold above which 
-#' the varaint is to be considerd somatic.
+#' the varaint is to be considered somatic.
 #' @return (data.frame) variants with macni posterior probability annotated.
 #' columns:  [chrom, pos, ref, alt, ref_ad, alt_ad, "macni_pp", "is_somatic"]
 run_macni <- function(vcf, sample_name, thresh=0.9, alpha.ghomo = 100, alpha.ghet = 100, beta.ghomo = 0, beta.ghet = 100) {
 
-	data <- extract_ad(vcf, sample_name, annotate_vaf=TRUE)
+	data <- read_vcf(vcf, sample_name)
 
 	alpha <- data.frame(
 		ghomo = rep(alpha.ghomo, times = nrow(data)), 
@@ -308,7 +373,6 @@ run_macni <- function(vcf, sample_name, thresh=0.9, alpha.ghomo = 100, alpha.ghe
 	)
 
 	data$is_somatic <- ifelse(data$macni_pp > thresh & !(is.nan(data$macni_pp) & data$vaf == 1), TRUE, FALSE)
-	# data$chrom <- paste0("chr", data$chrom)
 
 	return(data)
 }
