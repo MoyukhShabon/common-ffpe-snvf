@@ -308,69 +308,77 @@ construct_ground_truth <- function(annot_d, tissue, vcf.dir){
 # @param d  data.frame of variant annotation by mobsnvf
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_mobsnvf <- function(d, truths, vcf=NULL) {
+preprocess_mobsnvf <- function(d, truths=NULL, vcf=NULL) {
 	# mobsnvf sets FOBP to NA for variants that are not C>T
 	d <- d[!is.na(d$FOBP), ];
 	# lower score signifies real mutation:  
 	# hence, we flip scores to make higher score signify a real mutation
 	d$score <- -d$FOBP + 1;
-	d <- add_id(d);
 	if (!is.null(vcf)){
 		d <- restore_snvs(d, vcf)
 	}
-	d <- annotate_truth(d, truths)
-	d
+	if (!is.null(truths)){
+		d <- add_id(d);
+		d <- annotate_truth(d, truths)
+	}
+	return(d)
 }
 
 # @param d  data.frame of variant annotation by vafsnvf
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_vafsnvf <- function(d, truths, vcf=NULL) {
+preprocess_vafsnvf <- function(d, truths=NULL, vcf=NULL) {
 	d <- d[!is.na(d$VAFF), ]
 	# vafsnvf sets VAFF to NA for variants that are not C>T
 	d$score <- d$VAFF;
-	d <- add_id(d);
 	if (!is.null(vcf)){
 		d <- restore_snvs(d, vcf)
 	}
-	d <- annotate_truth(d, truths)
+	if (!is.null(truths)){
+		d <- add_id(d);
+		d <- annotate_truth(d, truths)
+	}
 	d
 }
 
 # @param d  data.frame of variant annotation by ideafix
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_ideafix <- function(d, truths, vcf=NULL) {
+preprocess_ideafix <- function(d, truths=NULL, vcf=NULL) {
 	d <- d[!is.na(d$deam_score), ]
 	d$score <- -d$deam_score + 1
-	d <- add_id(d)
 	if (!is.null(vcf)){
 		d <- restore_snvs(d, vcf)
 	}
-	d <- annotate_truth(d, truths)
+	if (!is.null(truths)){
+		d <- add_id(d);
+		d <- annotate_truth(d, truths)
+	}
 	d
 }
 
 # @param d  data.frame of variant annotation by ffpolish
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_ffpolish <- function(d, truths, vcf=NULL, ct_only=TRUE) {
+preprocess_ffpolish <- function(d, truths=NULL, vcf=NULL, ct_only=TRUE) {
 	if(ct_only){
 		d <- ct_filter(d)
 	}
 	d <- d[!is.na(d$score), ]
-	d <- add_id(d)
 	if (!is.null(vcf)){
 		d <- restore_snvs(d, vcf)
 	}
-	d <- annotate_truth(d, truths)
+	if (!is.null(truths)){
+		d <- add_id(d);
+		d <- annotate_truth(d, truths)
+	}
 	d
 }
 
 # @param d  data.frame of variant annotation by sobdetector
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_sobdetector <- function(d, truths, vcf=NULL, ct_only=TRUE) {
+preprocess_sobdetector <- function(d, truths=NULL, vcf=NULL, ct_only=TRUE) {
 	# SOBDetector output column explanations:
 	# 		artiStatus: Binary classification made by SOBDetector. Values are "snv" or "artifact"
 	# 		SOB: This is the strand oreintation bias score column which ranges from 0 and 1. Exception values: "." or NaN. 
@@ -394,8 +402,10 @@ preprocess_sobdetector <- function(d, truths, vcf=NULL, ct_only=TRUE) {
 	if (!is.null(vcf)){
 		d <- restore_snvs(d, vcf)
 	}
-	d <- add_id(d);
-	d <- annotate_truth(d, truths)
+	if (!is.null(truths)){
+		d <- add_id(d);
+		d <- annotate_truth(d, truths)
+	}
 	d
 }
 
@@ -403,7 +413,7 @@ preprocess_sobdetector <- function(d, truths, vcf=NULL, ct_only=TRUE) {
 # @param d  data.frame of variant annotation by microsec
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_microsec <- function(d, truths, ct_only=TRUE) {
+preprocess_microsec <- function(d, truths=NULL, ct_only=TRUE) {
 	d <- d[, c("Sample", "Chr", "Pos", "Ref", "Alt", "msec_filter_all")]
 	# microsec classifies artifacts which is casted to numeric. 
 	# 0 is artifact, 1 is true mutation.
@@ -413,15 +423,17 @@ preprocess_microsec <- function(d, truths, ct_only=TRUE) {
 		# Keep only C>T variants
 		d <- ct_filter(d)
 	}
-	d <- add_id(d);
-	d <- annotate_truth(d, truths)
+	if (!is.null(truths)){
+		d <- add_id(d);
+		d <- annotate_truth(d, truths)
+	}
 	d
 }
 
 # @param d  data.frame of variant annotation by GATK Orientation Bias Mixture Model
 # @param truths  data.frame of ground-truth variants
 # @return data.frame of variants with id and ground truth annotation
-preprocess_gatk_obmm <- function(d, truths, ct_only=TRUE){
+preprocess_gatk_obmm <- function(d, truths=NULL, ct_only=TRUE){
 	### GATK Orientation Bias mixture model makes binary classification. This is casted into scores 0 and 1
 	d$score <- ifelse(grepl("orientation", d$filter), 0, 1)
 	d <- d[!is.na(d$score), ]
@@ -429,8 +441,10 @@ preprocess_gatk_obmm <- function(d, truths, ct_only=TRUE){
 		# Keep only C>T variants
 		d <- ct_filter(d)
 	}
-	d <- add_id(d)
-	d <- annotate_truth(d, truths)
+	if (!is.null(truths)){
+		d <- add_id(d);
+		d <- annotate_truth(d, truths)
+	}
 	d
 }
 
