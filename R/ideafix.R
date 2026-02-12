@@ -78,6 +78,8 @@ postprocess <- function(result, vcf, apply_ct_filter=TRUE) {
 		result_all_var <- all_vars
 	}
 
+	result_all_var$deamination <- as.character(result_all_var$deamination)
+
 	# Score is deamination probability. Therefore hard filtered variants are set to 0 i.e non-deamination
 	result_all_var$deam_score <- ifelse(
 		!is.na(result_all_var$deam_score),
