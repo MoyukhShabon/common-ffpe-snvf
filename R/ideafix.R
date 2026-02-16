@@ -118,6 +118,14 @@ dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 toc(log=TRUE)
 tic("Feature Extraction")
 message(cat(sprintf("\nProcessing %s \n", sample_name)))
+
+if(endsWith(basename(vcf_path), ".vcf.gz")){
+	message(cat(sprintf("\nVCF is compressed. Decompressing to %s \n", outdir)))
+	temp_vcf <- file.path(outdir, paste0(sample_name, ".vcf"))
+	system2("bcftools", args = c("view", "-o", temp_vcf, vcf_path))
+	vcf_path <- temp_vcf
+}
+
 message(cat("\tGetting descriptors from VCF \n"))
 descriptors <- get_descriptors(vcf_filename = vcf_path, fasta_filename = ref_genome)
 ## An error is thrown if inf values exist in the descriptors They are removed
@@ -156,9 +164,14 @@ if (argv$run_rf){
 	toc(log=TRUE)
 }
 
+toc(log=TRUE)
+
 message(cat("\n\tComplete"))
 
-toc(log=TRUE)
+if (exists(temp_vcf)){
+	message("Removing temporary decompressed vcf")
+	file.remove(temp_vcf)
+}
 
 # Process Timing Logs ---
 raw_log <- tic.log(format = FALSE)
@@ -172,3 +185,4 @@ timings_df$minutes <- round(timings_df$seconds / 60, 4)
 timings_df$seconds <- round(timings_df$seconds, 4)
 
 qwrite(timings_df, file.path(outdir, sprintf("%s.runtime.tsv", sample_name)))
+
