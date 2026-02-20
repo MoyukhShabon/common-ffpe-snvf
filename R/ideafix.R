@@ -111,8 +111,7 @@ tic("Preamble")
 vcf_path <- argv$vcf
 ref_genome <- argv$ref
 sample_name <- ifelse(is.na(argv$sample_name), unlist(strsplit(basename(vcf_path), "\\."))[1], argv$sample_name)
-
-outdir <- file.path(argv$outdir, "ideafix", sample_name)
+outdir <- argv$outdir
 dir.create(outdir, showWarnings = FALSE, recursive = TRUE)
 
 toc(log=TRUE)
@@ -168,7 +167,7 @@ toc(log=TRUE)
 
 message(cat("\n\tComplete"))
 
-if (exists(temp_vcf)){
+if (exists("temp_vcf")){
 	message("Removing temporary decompressed vcf")
 	file.remove(temp_vcf)
 }
