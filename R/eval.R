@@ -358,7 +358,7 @@ preprocess_filter <- function(snvf_res, model_name, ground_truth=NULL) {
 	if(model_name == "ffpolish"){
 		return(preprocess_ffpolish(snvf_res, truths=ground_truth))
 	}
-	if("ideafix" %in% model_name){
+	if(grepl("ideafix", model_name)){
 		return(preprocess_ideafix(snvf_res, truths=ground_truth))
 	}
 	stop("Unknown model name provided for preprocessing.")
