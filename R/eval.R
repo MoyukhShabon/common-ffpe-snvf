@@ -361,6 +361,9 @@ preprocess_filter <- function(snvf_res, model_name, ground_truth=NULL) {
 	if("ideafix" %in% model_name){
 		return(preprocess_ideafix(snvf_res, truths=ground_truth))
 	}
+	if(filter == "gatk-obmm"){
+		return(preprocess_gatk_obmm(snvf_res, truths=ground_truth))
+	}
 	stop("Unknown model name provided for preprocessing.")
 }
 
