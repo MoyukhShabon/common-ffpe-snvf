@@ -310,7 +310,8 @@ read_vcf <- function(vcf_path, sample_name){
 		filter = getFILTER(vcf0),
 		ad = as.vector(extract.gt(vcf0, element = "AD")[, sample_name]),
 		f1r1 = as.vector(extract.gt(vcf0, element = "F1R2")[, sample_name]),
-		f2r1 = as.vector(extract.gt(vcf0, element = "F2R1")[, sample_name])
+		f2r1 = as.vector(extract.gt(vcf0, element = "F2R1")[, sample_name]),
+		dp = as.vector(extract.gt(vcf0, element = "DP")[, sample_name])
 	)
 
 	# Split AD, F1R2, and F2R1 fields into ref and alt
@@ -329,7 +330,8 @@ read_vcf <- function(vcf_path, sample_name){
 		f1r2_ref = as.numeric(f1r2_ref),
 		f1r2_alt = as.numeric(f1r2_alt),
 		f2r1_ref = as.numeric(f2r1_ref),
-		f2r1_alt = as.numeric(f2r1_alt)
+		f2r1_alt = as.numeric(f2r1_alt),
+		dp = as.numeric(dp)
 	)
 
 	vcf1$vaf <- with(vcf1, ad_alt/(ad_ref + ad_alt))
@@ -350,7 +352,7 @@ read_vcf <- function(vcf_path, sample_name){
 #' the varaint is to be considered somatic.
 #' @return (data.frame) variants with macni posterior probability annotated.
 #' columns:  [chrom, pos, ref, alt, ref_ad, alt_ad, "macni_pp", "is_somatic"]
-run_macni <- function(vcf, sample_name, thresh=0.9, alpha.ghomo = 100, alpha.ghet = 100, beta.ghomo = 0, beta.ghet = 100) {
+run_macni <- function(vcf, sample_name, thresh=NULL, alpha.ghomo = 100, alpha.ghet = 100, beta.ghomo = 0, beta.ghet = 100) {
 
 	data <- read_vcf(vcf, sample_name)
 
@@ -372,7 +374,9 @@ run_macni <- function(vcf, sample_name, thresh=0.9, alpha.ghomo = 100, alpha.ghe
 		log = FALSE
 	)
 
-	data$is_somatic <- ifelse(data$macni_pp > thresh & !(is.nan(data$macni_pp) & data$vaf == 1), TRUE, FALSE)
+	if (!is.null(thresh)) {
+		data$is_somatic <- ifelse(data$macni_pp > thresh & !(is.nan(data$macni_pp) & data$vaf == 1), TRUE, FALSE)
+	}
 
 	return(data)
 }
