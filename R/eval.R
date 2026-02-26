@@ -1,14 +1,16 @@
 #!/usr/bin/env Rscript
 
 # This script contains functions for evaluation
-## This is a work in progress. The functions still needs to be improved for generalizability across multiple projects and datasets
+## This is a work in progress. Some functions cab still be improved
 
 library(io)
 library(precrec)
 library(tidyr)
 
+
 #### A list of Chromosomes 1-22, X and Y
 standard_chromosomes <- paste0("chr", c(1:22, "X", "Y"))
+
 
 #' Read a VCF File
 #' @param path [string] The path to the VCF file.
@@ -41,88 +43,63 @@ read_vcf <- function(path, columns = NULL, split_multiallelic = TRUE) {
 
 
 #' Filter C>T variants
-#' @param d	[data.frame] of variants
-#' @param ref_col	[string] containing Reference allele column name
-#' @param alt_col	[string] containing Alternate allele column name
-#' @returns [data.frame] with only C:G>T:A mutations
+#' @param d [data.frame] of variants
+#' @param ref_col [string] containing Reference allele column name
+#' @param alt_col [string] containing Alternate allele column name
+#' @param invert [logical] invert the filter
+#' @return [data.frame] with only C:G>T:A mutations
 ct_filter <- function(d, ref_col = "ref", alt_col = "alt", invert = FALSE) {
-  # Use the variables ref_col/alt_col, not the hardcoded strings "ref"/"alt"
-  ct_mask <- ((d[[ref_col]] == "C") & (d[[alt_col]] == "T")) | 
-             ((d[[ref_col]] == "G") & (d[[alt_col]] == "A"))
-  
-  if (invert){
-    d[!ct_mask,]
-  } else {
-    d[ct_mask,]
-  }
-}
-
-#' Restores variants omitted by ffpe snvf model and fills in scores accordingly
-#' FFPolish and Ideafix only evaluates on PASS variants. 
-#' Therefore non-PASS variants are implied to be artifacts
-#' Hence, non-PASS variants scores are filled with 0 i.e definite artifact
-#' Remaining variants omitted are filled in with 1 assuming the models predict it as definite real mutation
-#' For example, Ideafix only evaluated SNVs with VAF<0.3. Calling anything above that threshold to be real mutations
-#' @param snvf [data.frame] result from ffpe filtering model
-#' @param vcf [string] path to the vcf used for ffpe_snvf
-#' @return restored_snvf [data.frame] dataframe with variants 
-#' restored and score col filled accordingly
-restore_snvs <- function(snvf, vcf){
-	vcf_vars <- read_vcf(vcf, columns = c("chrom", "pos", "ref", "alt", "filter"))
-	vcf_ct_snv <- ct_filter(vcf_vars)
-
-	restored_snvf <- merge(vcf_ct_snv, snvf, by = c("chrom", "pos", "ref", "alt"), all.x = TRUE)
-
-	restored_snvf$score <- ifelse(((restored_snvf$filter != "PASS") & is.na(restored_snvf$score)), 0, restored_snvf$score)
-	restored_snvf$score <- ifelse(is.na(restored_snvf$score), 1, restored_snvf$score)
+	# Use the variables ref_col/alt_col, not the hardcoded strings "ref"/"alt"
+	ct_mask <- ((d[[ref_col]] == "C") & (d[[alt_col]] == "T")) | 
+				((d[[ref_col]] == "G") & (d[[alt_col]] == "A"))
 	
-	restored_snvf$filter <- NULL
-
-	return(restored_snvf)
-	
+	if (invert){
+		d[!ct_mask,]
+	} else {
+		d[ct_mask,]
+	}
 }
 
 
-# Create variant ID based on chrom, pos, ref, and alt
-# @param d  data.frame of variants
-# @return data.frame of variant with ID annotation
+#' Create variant ID based on chrom, pos, ref, and alt
+#' @param d [data.frame] of variants
+#' @return [data.frame] of variant with ID annotation
 add_id <- function(d) {
 	d$snv <- with(d, paste(chrom, pos, ref, alt, sep="_"))
 	d
 }
 
 
-# Annotate called variant with whether each variant is in the ground truth
-# variant call set
-# @param  d  data.frame of called variants to be annotated
-# @param  truth  data.frame of ground truth variants
-# @returns data.frame with annotated ground truth label
+#' Annotate called variant with whether each variant is in the ground truth
+#' variant call set
+#' @param d [data.frame] of called variants to be annotated
+#' @param truth [data.frame] of ground truth variants
+#' @return [data.frame] with annotated ground truth label
 annotate_truth <- function(d, truth) {
 	d$truth <- d$snv %in% truth$snv;
 	d
 }
 
-#### Create a set of SNVs across multiple samples
-# @params paths list of strings with vcf paths
-# @return data.frame of variant union set with ID annotation
-snv_union <- function(paths) {
 
+#' Create a set of SNVs across multiple samples
+#' @param paths [list] of strings with vcf paths
+#' @return [data.frame] of variant union set with ID annotation
+snv_union <- function(paths) {
 	# Combine SNVs from VCF if multiple exists
 	combined <- do.call(
 		rbind,
 		lapply(paths, function(vcf_path) read_vcf(vcf_path, columns = c("chrom", "pos", "ref", "alt")))
 	)
-
 	# only keep one instance of each variant
 	union <- add_id(unique(combined))
-
 	return(union)
 }
 
 
-#### Function to classify variants based on a set of Q values and a False Positive cutoff threshold
-## @params q vector | vector of FDR adjusted p-values i.e. q-values
-## @returns a boolean vector
+#' Function to classify variants based on a set of Q values and a False Positive cutoff threshold
+#' @param q [vector] of FDR adjusted p-values i.e. q-values
+#' @param fp.cut [numeric] False Positive cutoff threshold
+#' @return [logical] a boolean vector
 adaptive_fdr_cut <- function(q, fp.cut) {
 	n <- length(q);
 	# adaptive threshold chosen to expect less than one false positive
@@ -141,158 +118,50 @@ adaptive_fdr_cut <- function(q, fp.cut) {
 }
 
 
-#### Function to label the models prediction based on the adaptive_fdr_cut function
-# @params df (data.frame) | with model's scores
-# @params score (string) | column name of score column
-# @params fp-cut (numeric) | the false positive cut off value. Default = 0.5
-# @return data.frame of model's score with annotated prediction based on fp-cut
+#' Function to label the models prediction based on the adaptive_fdr_cut function
+#' @param df [data.frame] with model's scores
+#' @param score [string] column name of score column
+#' @param fp.cut [numeric] the false positive cut off value. Default = 0.5
+#' @return [data.frame] of model's score with annotated prediction based on fp-cut
 fdr_cut_pred <- function(df, score, fp.cut=0.5) {
 	
-	##### Split C>T and non C>T mutations into two dataframes using base R
-	df.ct <- df[complete.cases(df[[score]]), ]
-	df.nct <- df[!complete.cases(df[[score]]), ]
+	# Split artifact mutation type (e.g C>T) and 
+	# non artifact mutation types (e.g non-C>T) into two dataframes
+	df.arti <- df[complete.cases(df[[score]]), ]
+	df.nonarti <- df[!complete.cases(df[[score]]), ]
 
-	if(nrow(df.nct) != 0) {
-		##### For non C>T, mutate columns using direct assignment
-		df.nct$score <- NA
-		df.nct$q <- NA
-		df.nct$pred <- TRUE
+	if(nrow(df.nonarti) != 0) {
+		# For non C>T, mutate columns using direct assignment
+		df.nonarti$score <- NA
+		df.nonarti$q <- NA
+		df.nonarti$pred <- TRUE
 	}
 
-	##### Predict artifacts based on q-values and adaptive_fdr_cut function
+	# Predict artifacts based on q-values and adaptive_fdr_cut function
 	# set the 0 to machine precision
-	df.ct$score <- ifelse(df.ct[[score]] == 0, .Machine$double.eps, df.ct[[score]])
-	df.ct$q <- p.adjust(df.ct$score, "BH")
-	## TRUE being real muatation and FALSE being artifacts
-	df.ct$pred <- adaptive_fdr_cut(df.ct$q, fp.cut)
+	df.arti$score <- ifelse(df.arti[[score]] == 0, .Machine$double.eps, df.arti[[score]])
+	df.arti$q <- p.adjust(df.arti$score, "BH")
+	# Get Predictions - TRUE being real muatation and FALSE being artifacts
+	df.arti$pred <- adaptive_fdr_cut(df.arti$q, fp.cut)
 
-	##### Combine the C>T and non C>T dataframes back into one single dataframe
-	df <- rbind(df.ct, df.nct)
+	# Combine the C>T and non C>T dataframes back into one single dataframe
+	df <- rbind(df.arti, df.nonarti)
 	# Sort
 	df <- df[order(df$chrom, df$pos), ]
 	df
 }
 
-
-#### Calculate True/False Positives/Negatives from prediction and ground truth
-# @param data.frame with models prediction and ground truth columns
-# @return list with numeric FP, TP, FN, and TP
-calc_confusion_matrix <- function(df, pred_col = "pred", truth_col = "truth") {
-	TP <- nrow(df[df[[pred_col]] & df[[truth_col]], ])
-	FP <- nrow(df[df[[pred_col]] & !df[[truth_col]], ])
-	FN <- nrow(df[!df[[pred_col]] & df[[truth_col]], ])
-	TN <- nrow(df[!df[[pred_col]] & !df[[truth_col]], ])
-	
-	list(
-		TP = TP,
-		FP = FP,
-		FN = FN,
-		TN = TN
-	)
-}
-
-
-#### Calculate evaluation metrics based on confusion matrix
-# @param data.frame with models prediction and ground truth columns
-# @return list with sensitivity, specificity, precision, and recall
-calc_eval_metrics <- function(df, pred_col = "pred", truth_col = "truth") {
-
-	confusion_matrix <- calc_confusion_matrix(df, pred_col, truth_col)
-
-	precision <- confusion_matrix$TP / (confusion_matrix$TP + confusion_matrix$FP)
-	recall <- confusion_matrix$TP / (confusion_matrix$TP + confusion_matrix$FN)
-	sensitivity <- recall  # sensitivity is same as recall
-	specificity <- confusion_matrix$TN / (confusion_matrix$TN + confusion_matrix$FP)
-	
-	list(
-		precision = precision,
-		recall = recall,
-		sensitivity = sensitivity,
-		specificity = specificity
-	)
-}
-
-## FIX ME remove after refactoring is complete
-## Function to create multimodel AUROC and AUPRC table based on a dataframe containing ROC and PRC
-## Column names for ROC df must be fpr and tpr
-## Column names for ROC df must be precision and recall
-get_multimodel_auroc_auprc <- function(multimodel_roc_df,  multimodel_prc_df, sample_name, model_names = NULL, model_col = "model") {
-
-	if(is.null(model_names)) {
-		model_names <- unique(multimodel_roc_df$model)
-	}
-
-	auc_list <- list()
-
-	for (i in seq_along(model_names)) {
-		model_name <- model_names[i]
-
-		# Filter using base R subsetting instead of dplyr::filter
-		model_roc <- multimodel_roc_df[multimodel_roc_df[[model_col]] == model_name, ]
-		model_prc <- multimodel_prc_df[multimodel_prc_df[[model_col]] == model_name, ]
-
-		model_auroc <- calculate.auc(model_roc, x_col = "fpr", y_col = "tpr")
-		model_auprc <- calculate.auc(model_prc, x_col = "recall", y_col = "precision")
-
-		auc_list[[i]] <- data.frame(
-			sample_id = sample_name,
-			model = model_name,
-			auroc = model_auroc,
-			auprc = model_auprc
-		)
-
-	}
-
-	# Combine list of data frames using base R
-	aucs <- do.call(rbind, auc_list)
-
-	return(aucs)
-}
-
 ############################
 
-# @params sample_name	unique identifier for the ffpe sample
-# @params filter_name	name of the ffpe filter used in the path structure
-# @params ffpe_snvf.dir	root directory containing the ffpe filter outputs
-read_snv <- function(sample_name, filter_name, ffpe_snvf.dir) {
-	path <- file.path(ffpe_snvf.dir, filter_name, sample_name, sprintf("%s.%s.snv", sample_name, filter_name))
-	if (file.exists(path)) {
-		read.delim(path)
-	} else {
-		path <- file.path(ffpe_snvf.dir, filter_name, sample_name, sprintf("%s.%s.tsv", sample_name, filter_name))
-		read.delim(path)
-	}
-}
-
-# @params sample_name	unique identifier for the ffpe sample
-# @params filter_name	name of the ffpe filter used in the path structure i.e microsec
-# @params ffpe_snvf.dir	root directory containing the ffpe filter outputs
-read_microsec_snv <- function(sample_name, filter_name = "microsec", ffpe_snvf.dir) {
-	path <- file.path(ffpe_snvf.dir, filter_name, "outputs", sample_name, sprintf("%s.%s.tsv", sample_name, filter_name))
-	read.delim(path)
-}
-
-# @params sample_name	unique identifier for the ffpe sample
-# @params vcf.dir	root directory for VCFs
-# @params filter_name	Unused. Present for compatibility with process_sample()
-# @params read_vcf_f	function to read VCFs. By default set to "read_vcf" which is defined in eval.R
-read_gatk_snv <- function(sample_name, filter_name, vcf.dir, read_vcf_f = read_vcf){
-	path <- file.path(vcf.dir, sample_name, sprintf("%s.vcf.gz", sample_name))
-	if (!file.exists(path)){
-		path <- file.path(vcf.dir, sample_name, sprintf("%s.vcf", sample_name))
-	}
-	d <- read_vcf(path, columns = c("chrom", "pos", "ref", "alt", "filter"))
-	d
-}
-
-# Construct the Ground Truth SNVs
-## To do this we make a union set for all the FF samples matched to this FFPE sample
-## This dataset has matched FFPE and FF from the same patient.
-## All samples within the same tissue type are matched
-## Hence, we select the frozen variants from the same tissue type as the FFPE sample
-## @params annot_d		data.frame containing sample annotation for frozen samples
-## @params tissue_type		string describing the type of tissue
-## @return data.frame of ground truth variants
+#' Construct the Ground Truth SNVs
+#' To do this we make a union set for all the FF samples matched to this FFPE sample
+#' This dataset has matched FFPE and FF from the same patient.
+#' All samples within the same tissue type are matched
+#' Hence, we select the frozen variants from the same tissue type as the FFPE sample
+#' @param annot_d [data.frame] containing sample annotation for frozen samples
+#' @param tissue [string] describing the type of tissue
+#' @param vcf.dir [string] directory containing VCF files
+#' @return [data.frame] of ground truth variants
 construct_ground_truth <- function(annot_d, tissue, vcf.dir){
 
 	annot_d <- annot_d[annot_d$tissue_type == tissue, ]
@@ -305,9 +174,11 @@ construct_ground_truth <- function(annot_d, tissue, vcf.dir){
 	truths
 }
 
-# @param d  data.frame of variant annotation by mobsnvf
-# @param truths  data.frame of ground-truth variants
-# @return data.frame of variants with id and ground truth annotation
+#' Preprocess mobsnvf results
+#' @param d [data.frame] of mobsnvf variant annotation
+#' @param truths [data.frame] of ground-truth variants (optional)
+#' @param vcf [data.frame] (optional)
+#' @return [data.frame] with score and truth annotation
 preprocess_mobsnvf <- function(d, truths=NULL, vcf=NULL) {
 	# mobsnvf sets FOBP to NA for variants that are not C>T
 	d <- d[!is.na(d$FOBP), ];
@@ -324,9 +195,11 @@ preprocess_mobsnvf <- function(d, truths=NULL, vcf=NULL) {
 	return(d)
 }
 
-# @param d  data.frame of variant annotation by vafsnvf
-# @param truths  data.frame of ground-truth variants
-# @return data.frame of variants with id and ground truth annotation
+#' Preprocess vafsnvf results
+#' @param d [data.frame] of vafsnvf variant annotation
+#' @param truths [data.frame] of ground-truth variants (optional)
+#' @param vcf [data.frame] (optional)
+#' @return [data.frame] with score and truth annotation
 preprocess_vafsnvf <- function(d, truths=NULL, vcf=NULL) {
 	d <- d[!is.na(d$VAFF), ]
 	# vafsnvf sets VAFF to NA for variants that are not C>T
@@ -341,9 +214,11 @@ preprocess_vafsnvf <- function(d, truths=NULL, vcf=NULL) {
 	d
 }
 
-# @param d  data.frame of variant annotation by ideafix
-# @param truths  data.frame of ground-truth variants
-# @return data.frame of variants with id and ground truth annotation
+#' Preprocess ideafix results
+#' @param d [data.frame] of ideafix variant annotation
+#' @param truths [data.frame] of ground-truth variants (optional)
+#' @param vcf [data.frame] (optional)
+#' @return [data.frame] with score and truth annotation
 preprocess_ideafix <- function(d, truths=NULL, vcf=NULL) {
 	d <- d[!is.na(d$deam_score), ]
 	d$score <- -d$deam_score + 1
@@ -357,9 +232,12 @@ preprocess_ideafix <- function(d, truths=NULL, vcf=NULL) {
 	d
 }
 
-# @param d  data.frame of variant annotation by ffpolish
-# @param truths  data.frame of ground-truth variants
-# @return data.frame of variants with id and ground truth annotation
+#' Preprocess ffpolish results
+#' @param d [data.frame] of ffpolish variant annotation
+#' @param truths [data.frame] of ground-truth variants (optional)
+#' @param vcf [data.frame] (optional)
+#' @param ct_only [logical] keep only C>T variants (default: TRUE)
+#' @return [data.frame] with score and truth annotation
 preprocess_ffpolish <- function(d, truths=NULL, vcf=NULL, ct_only=TRUE) {
 	if(ct_only){
 		d <- ct_filter(d)
@@ -375,9 +253,12 @@ preprocess_ffpolish <- function(d, truths=NULL, vcf=NULL, ct_only=TRUE) {
 	d
 }
 
-# @param d  data.frame of variant annotation by sobdetector
-# @param truths  data.frame of ground-truth variants
-# @return data.frame of variants with id and ground truth annotation
+#' Preprocess SOBDetector results
+#' @param d [data.frame] of SOBDetector variant annotation
+#' @param truths [data.frame] of ground-truth variants (optional)
+#' @param vcf [data.frame] (optional)
+#' @param ct_only [logical] keep only C>T variants (default: TRUE)
+#' @return [data.frame] with score and truth annotation
 preprocess_sobdetector <- function(d, truths=NULL, vcf=NULL, ct_only=TRUE) {
 	# SOBDetector output column explanations:
 	# 		artiStatus: Binary classification made by SOBDetector. Values are "snv" or "artifact"
@@ -409,16 +290,18 @@ preprocess_sobdetector <- function(d, truths=NULL, vcf=NULL, ct_only=TRUE) {
 	d
 }
 
-
-# @param d  data.frame of variant annotation by microsec
-# @param truths  data.frame of ground-truth variants
-# @return data.frame of variants with id and ground truth annotation
-preprocess_microsec <- function(d, truths=NULL, ct_only=TRUE) {
-	d <- d[, c("Sample", "Chr", "Pos", "Ref", "Alt", "msec_filter_all")]
+#' Preprocess microsec results
+#' @param d [data.frame] of microsec variant annotation
+#' @param truths [data.frame] of ground-truth variants (optional)
+#' @param ct_only [logical] keep only C>T variants (default: TRUE)
+#' @param msec_filter_col [string] column name for microsec filter
+#' @return [data.frame] with score and truth annotation
+preprocess_microsec <- function(d, truths=NULL, ct_only=TRUE, msec_filter_col = "msec_filter_1234") {
+	d <- d[, c("Sample", "Chr", "Pos", "Ref", "Alt", msec_filter_col)]
 	# microsec classifies artifacts which is casted to numeric. 
 	# 0 is artifact, 1 is true mutation.
 	d$score <- ifelse(grepl("Artifact", d$msec_filter_all), 0, 1)
-	colnames(d) <- c("sample_name", "chrom", "pos", "ref", "alt", "msec_filter_all", "score")
+	colnames(d) <- c("sample_name", "chrom", "pos", "ref", "alt", msec_filter_col, "score")
 	if (ct_only){
 		# Keep only C>T variants
 		d <- ct_filter(d)
@@ -430,9 +313,11 @@ preprocess_microsec <- function(d, truths=NULL, ct_only=TRUE) {
 	d
 }
 
-# @param d  data.frame of variant annotation by GATK Orientation Bias Mixture Model
-# @param truths  data.frame of ground-truth variants
-# @return data.frame of variants with id and ground truth annotation
+#' Preprocess GATK Orientation Bias Mixture Model results
+#' @param d [data.frame] of GATK OBMM variant annotation
+#' @param truths [data.frame] of ground-truth variants (optional)
+#' @param ct_only [logical] keep only C>T variants (default: TRUE)
+#' @return [data.frame] with score and truth annotation
 preprocess_gatk_obmm <- function(d, truths=NULL, ct_only=TRUE){
 	### GATK Orientation Bias mixture model makes binary classification. This is casted into scores 0 and 1
 	d$score <- ifelse(grepl("orientation", d$filter), 0, 1)
@@ -449,15 +334,46 @@ preprocess_gatk_obmm <- function(d, truths=NULL, ct_only=TRUE){
 }
 
 
+#' Preprocess SNV Filter Results
+#' Routes SNV filter results to the appropriate preprocessing function based on the model name.
+#' 
+#' @param snvf_res [data.frame] containing SNV filter results.
+#' @param model_name [character] specifying the model type. Supported models are:
+#'   "mobsnvf", "vafsnvf", "sobdetector", "gatk-obmm", "ffpolish", or "ideafix".
+#' @param ground_truth [data.frame] Optional. Ground truth data for validation. Default is NULL.
+#' @return [data.frame] Preprocessed SNV filter results in a model-specific format
+preprocess_filter <- function(snvf_res, model_name, ground_truth=NULL) {
+	if(model_name == "mobsnvf"){
+		return(preprocess_mobsnvf(snvf_res, truths=ground_truth))
+	}
+	if(model_name == "vafsnvf"){
+		return(preprocess_vafsnvf(snvf_res, truths=ground_truth))
+	}
+	if(model_name == "sobdetector"){
+		return(preprocess_sobdetector(snvf_res, truths=ground_truth))
+	}
+	if(model_name == "gatk-obmm"){
+		return(preprocess_gatk_obmm(snvf_res, truths=ground_truth))
+	}
+	if(model_name == "ffpolish"){
+		return(preprocess_ffpolish(snvf_res, truths=ground_truth))
+	}
+	if("ideafix" %in% model_name){
+		return(preprocess_ideafix(snvf_res, truths=ground_truth))
+	}
+	stop("Unknown model name provided for preprocessing.")
+}
+
+
 ## Function to evaluate an FFPE filter's performance
-# @param d       data.frame of variant annotation
-# @param model_names	string containing name to model to be evaluated
-# @param sample_name 	string containing sample name being evaluated
-# @return list with components:
-# 	- eval	precrec eval object
-#	- auc	data.frame containing AUROC and AUPRC of each model
-#	- roc	data.frame containing ROC curve coordinated
-#	- prc	data.frame containing PRC curve coordinated
+#' @param d [data.frame] of variant annotation
+#' @param model_name [string] containing name to model to be evaluated
+#' @param sample_name [string] containing sample name being evaluated
+#' @return [list] with components:
+#' 	- eval [object] precrec eval object
+#'	- auc [data.frame] containing AUROC and AUPRC of each model
+#'	- roc [data.frame] containing ROC curve coordinated
+#'	- prc [data.frame] containing PRC curve coordinated
 evaluate_filter <- function(d, model_name, sample_name) {;
 	eval_obj <- with(d, evalmod(scores = score, labels = truth, modnames = model_name));
 
@@ -489,65 +405,12 @@ evaluate_filter <- function(d, model_name, sample_name) {;
 	)
 }
 
-
-# Remark: evalmod will be replaced with another function in the future!
-
-# Function to obtain necessary metadata
-# @params annot_d		data.frame containing sample annotation
-# @params index		the index of the sample to process
-# @return list with "sample_name" and "tissue" type to be evaluated as string
-set_up <- function(annot_d, index) {
-	list(
-		sample_name = annot_d[index, "sample_name"],
-		tissue = annot_d[index, "tissue_type"]
-	)
-}
-
-
-# Higher-order wrapper function to process a single FFPE sample with a given filter
-# All functions are passed in as arguments to make this a reusable higher-order function.
-#
-# @param read_f        function(sample_name, filter_name, snvf_dir) -> data.frame
-#                      Reads the filter-specific variant output for a sample
-#
-# @param preprocess_f  function(d, truths) -> data.frame
-#                      constructs the ground truth variants for the FFPE sample
-#
-# @param truth_f       function(gt_annot_d, tissue, gt_vcf_dir) -> data.frame
-#                      Constructs the ground-truth variant set for the FFPE sample.
-#
-# @param evaluate_f    function(d, filter_name) -> list
-#                      evaluates the preprocessed variants (e.g. computes ROC/PRC/AUC)
-#
-# @param sample_name   character. Unique identifier for the FFPE sample (used by read_f and for naming)
-# @param tissue        character. Tissue type string used by truth_f to select matching frozen samples
-# @param filter_name   character. Name of the filter (used to build file paths or as model name in evaluate_f)
-# @param gt_annot_d    data.frame. Annotation table used by truth_f to select matched samples (e.g. frozen_tumoral)
-# @param snvf_dir      character. Root directory containing filter outputs (passed to read_f)
-# @param gt_vcf_dir    character. Root directory containing ground-truth VCFs (passed to truth_f)
-#
-# @return list with components:
-#  - d   : data.frame. The preprocessed variant table annotated with "score", "id", and "truth" columns.
-#  - res : list. Evaluation result object returned by evaluate_f (e.g. contains eval, auc, roc, prc).
-#  - gt  : data.frame. Ground-truth variants constructed by truth_f for this sample.
-process_sample <- function(read_f, truth_f, preprocess_f, evaluate_f, sample_name, tissue, filter_name, gt_annot_d, snvf_dir, gt_vcf_dir) {
-	d <- read_f(sample_name, filter_name, snvf_dir);
-	gt <- truth_f(gt_annot_d, tissue, gt_vcf_dir)
-	d <- preprocess_f(d, gt);
-	res <- evaluate_f(d, filter_name, sample_name);
-	
-	list(
-		d = d,
-		res = res
-	)
-}
-
-# Function to write results for a processed sample
-# @params score_truth_d		data.frame, variant with model's score and ground truth annotation
-# @params processed_obj 	list, returned by function: process_sample()
-# @params outdir_root		string, root output directory for evaluation
-# @params sample_name		string, sample name for the processed sample
-# @params model_name		name of ffpe snv filter being evaluated
+#' Function to write results for a processed sample
+#' @param score_truth_d [data.frame] variant with model's score and ground truth annotation
+#' @param eval_res_list [list] returned by function: evaluate_filter()
+#' @param outdir_root [string] root output directory for evaluation
+#' @param sample_name [string] sample name for the processed sample
+#' @param model_name [string] name of ffpe snv filter being evaluated
 write_sample_eval <- function(score_truth_d, eval_res_list, outdir_root, sample_name, model_name){
 	
 	# Saving the variant set with scores and ground truth labels for each sample
@@ -567,12 +430,12 @@ write_sample_eval <- function(score_truth_d, eval_res_list, outdir_root, sample_
 	}
 }
 
-# Function to write results for overall evaluation
-# @params score_truth_d		data.frame, variant with model's score and ground truth annotation
-# @params processed_obj 	list, returned by function: process_sample()
-# @params outdir_root		string, root output directory for evaluation
-# @params sample_name		string, sample name for the processed sample
-# @params model_name		name of ffpe snv filter being evaluated
+#' Function to write results for overall evaluation
+#' @param score_truth_d [data.frame] variant with model's score and ground truth annotation
+#' @param result_obj [list] returned by function: evaluate_filter()
+#' @param outdir_root [string] root output directory for evaluation
+#' @param sample_name [string] sample name for the processed sample
+#' @param model_name [string] name of ffpe snv filter being evaluated
 write_overall_eval <- function(score_truth_d, result_obj, outdir_root, sample_name, model_name){
 
 	score_truth_outdir <- file.path(outdir_root, "model-scores_truths")
@@ -586,4 +449,86 @@ write_overall_eval <- function(score_truth_d, result_obj, outdir_root, sample_na
 	qwrite(result_obj$auc, file.path(eval_outdir, sprintf("%s_%s_auc_table.tsv", sample_name, model_name)))
 	qwrite(result_obj$roc, file.path(eval_outdir, sprintf("%s_%s_roc_coordinates.tsv", sample_name, model_name)))
 	qwrite(result_obj$prc, file.path(eval_outdir, sprintf("%s_%s_prc_coordinates.tsv", sample_name, model_name)))
+}
+
+
+#' Higher-order wrapper function to process a single FFPE sample with a given filter
+#' All functions are passed in as arguments to make this a reusable higher-order function.
+#'
+#' @param read_f [function] function(sample_name, filter_name, snvf_dir) -> data.frame
+#'                      Reads the filter-specific variant output for a sample
+#'
+#' @param truth_f [function] function(gt_annot_d, tissue, gt_vcf_dir) -> data.frame
+#'                      Constructs the ground-truth variant set for the FFPE sample.
+#'
+#' @param preprocess_f [function] function(d, truths) -> data.frame
+#'                      constructs the ground truth variants for the FFPE sample
+#'
+#' @param evaluate_f [function] function(d, filter_name) -> list
+#'                      evaluates the preprocessed variants (e.g. computes ROC/PRC/AUC)
+#'
+#' @param sample_name [character] Unique identifier for the FFPE sample (used by read_f and for naming)
+#' @param tissue [character] Tissue type string used by truth_f to select matching frozen samples
+#' @param filter_name [character] Name of the filter (used to build file paths or as model name in evaluate_f)
+#' @param gt_annot_d [data.frame] Annotation table used by truth_f to select matched samples (e.g. frozen_tumoral)
+#' @param snvf_dir [character] Root directory containing filter outputs (passed to read_f)
+#' @param gt_vcf_dir [character] Root directory containing ground-truth VCFs (passed to truth_f)
+#'
+#' @return [list] with components:
+#'  - d [data.frame] The preprocessed variant table annotated with "score", "id", and "truth" columns.
+#'  - res [list] Evaluation result object returned by evaluate_f (e.g. contains eval, auc, roc, prc).
+#'  - gt [data.frame] Ground-truth variants constructed by truth_f for this sample.
+process_sample <- function(read_f, truth_f, preprocess_f, evaluate_f, sample_name, tissue, filter_name, gt_annot_d, snvf_dir, gt_vcf_dir) {
+	d <- read_f(sample_name, filter_name, snvf_dir);
+	gt <- truth_f(gt_annot_d, tissue, gt_vcf_dir)
+	d <- preprocess_f(d, gt);
+	res <- evaluate_f(d, filter_name, sample_name);
+	
+	list(
+		d = d,
+		res = res
+	)
+}
+
+
+#' Calculate True/False Positives/Negatives from prediction and ground truth
+#' @param df [data.frame] with models prediction and ground truth columns
+#' @param pred_col [string] prediction column name
+#' @param truth_col [string] truth column name
+#' @return [list] with numeric FP, TP, FN, and TN
+calc_confusion_matrix <- function(df, pred_col = "pred", truth_col = "truth") {
+	TP <- nrow(df[df[[pred_col]] & df[[truth_col]], ])
+	FP <- nrow(df[df[[pred_col]] & !df[[truth_col]], ])
+	FN <- nrow(df[!df[[pred_col]] & df[[truth_col]], ])
+	TN <- nrow(df[!df[[pred_col]] & !df[[truth_col]], ])
+	
+	list(
+		TP = TP,
+		FP = FP,
+		FN = FN,
+		TN = TN
+	)
+}
+
+
+#' Calculate evaluation metrics based on confusion matrix
+#' @param df [data.frame] with models prediction and ground truth columns
+#' @param pred_col [string] prediction column name
+#' @param truth_col [string] truth column name
+#' @return [list] with sensitivity, specificity, precision, and recall
+calc_eval_metrics <- function(df, pred_col = "pred", truth_col = "truth") {
+
+	confusion_matrix <- calc_confusion_matrix(df, pred_col, truth_col)
+
+	precision <- confusion_matrix$TP / (confusion_matrix$TP + confusion_matrix$FP)
+	recall <- confusion_matrix$TP / (confusion_matrix$TP + confusion_matrix$FN)
+	sensitivity <- recall  # sensitivity is same as recall
+	specificity <- confusion_matrix$TN / (confusion_matrix$TN + confusion_matrix$FP)
+	
+	list(
+		precision = precision,
+		recall = recall,
+		sensitivity = sensitivity,
+		specificity = specificity
+	)
 }
