@@ -348,8 +348,7 @@ read_vcf <- function(vcf_path, sample_name){
 #' Extract Allelic Depth (count of reads supporting ref and alt allele)
 #' @param vcf (string) path to VCF file
 #' @param sample_name (string) name of tumor sample name in the VCF.
-#' @param tresh (float) posterior probability threshold above which 
-#' the varaint is to be considered somatic.
+#' @param tresh (float) posterior probability threshold above which the varaint is to be considered somatic.
 #' @return (data.frame) variants with macni posterior probability annotated.
 #' columns:  [chrom, pos, ref, alt, ref_ad, alt_ad, "macni_pp", "is_somatic"]
 run_macni <- function(vcf, sample_name, thresh=NULL, alpha.ghomo = 100, alpha.ghet = 100, beta.ghomo = 0, beta.ghet = 100) {
