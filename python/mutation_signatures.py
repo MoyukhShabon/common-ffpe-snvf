@@ -18,7 +18,7 @@ Author: Moyukh Shabon Khan
 """
 
 import math
-from typing import Any, Optional, Union, Dict
+from typing import Any, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
