@@ -14,15 +14,16 @@ library(patchwork)
 library(grid)
 library(hrbrthemes)
 library(viridis)
+library(LTTB)
 
 ### Plotting
 
-# Function to check if the roc and prc coordinate table is from the same sample and returns sample name if they match
-# @param roc_path (string) | path to roc coordinates table
-# @param prc_path (string) | path to prc coordinates table
-# @param roc_suffix (string) | default: "_all-models_roc_coordinates.tsv" | roc coordinates table suffix after sample name
-# @param prc_suffix (string) | default: "_all-models_roc_coordinates.tsv" | prc coordinates table suffix after sample name
-# @return boolean
+#' Function to check if the roc and prc coordinate table is from the same sample and returns sample name if they match
+#' @param roc_path (string) | path to roc coordinates table
+#' @param prc_path (string) | path to prc coordinates table
+#' @param roc_suffix (string) | default: "_all-models_roc_coordinates.tsv" | roc coordinates table suffix after sample name
+#' @param prc_suffix (string) | default: "_all-models_roc_coordinates.tsv" | prc coordinates table suffix after sample name
+#' @return (string) name of the sample
 match_return_sample_name <- function(roc_path, prc_path, roc_suffix = "_all-models_roc_coordinates.tsv", prc_suffix = "_all-models_roc_coordinates.tsv"){
 
 	sample_name_roc <- gsub(roc_suffix, "", basename(roc_path))
@@ -37,18 +38,20 @@ match_return_sample_name <- function(roc_path, prc_path, roc_suffix = "_all-mode
 	sample_name_roc
 }
 
-## Function to make roc prc plot based on roc and prc coordinate
-# @param roc_coord (data.frame) | dataframe of roc coordinates
-# @param prc_coord (data.frame) | dataframe of prc coordinates
-# @param title (string) | Plot title
-# @param subtitle (string) | Plot subtitle
-# @param x_col (name) | The name of the column to be used for the x-axis. Default: x
-# @param y_col (name) | The name of the column to be used for the y-axis. Default: y
-# @param model_col (name) | The name of the column for color grouping. Default: model
-# @param caption (string) | Plot caption | default: "Only C>T SNVs Evaluated"
-# @param legend_rows (integer) | The number of rows to wrap the legend into. Default: NULL (single row).
-# @param individual_plots (boolean) | creates separate ROC and PRC plots alongside combined ROC PRC plot. Returns list of plot objects (roc_prc, roc, prc)
-# @return ggplot2 object | containing both roc and prc plot
+#' Function to make roc prc plot based on roc and prc coordinate
+#' @param roc_coord (data.frame) | dataframe of roc coordinates
+#' @param prc_coord (data.frame) | dataframe of prc coordinates
+#' @param title (string) | Plot title
+#' @param subtitle (string) | Plot subtitle
+#' @param x_col (name) | The name of the column to be used for the x-axis. Default: x
+#' @param y_col (name) | The name of the column to be used for the y-axis. Default: y
+#' @param model_col (name) | The name of the column for color grouping. Default: model
+#' @param caption (string) | Plot caption | default: "Only C>T SNVs Evaluated"
+#' @param legend_rows (integer) | The number of rows to wrap the legend into. Default: NULL (single row).
+#' @param individual_plots (boolean) | creates separate ROC and PRC plots alongside combined ROC PRC plot. Returns list of plot objects (roc_prc, roc, prc)
+#' @param downsample_threshold (integer) | Per-model row count above which LTTB downsampling is applied. Default: 5000. Set to Inf to disable.
+#' @param downsample_n (integer) | Target number of points per model after LTTB downsampling. Default: 2000. Actual output will be at most n_bins + 2 where n_bins = downsample_n - 2.
+#' @return ggplot2 object | containing both roc and prc plot
 make_roc_prc_plot <- function(
 	roc_coord,
 	prc_coord,
@@ -63,6 +66,8 @@ make_roc_prc_plot <- function(
 	legend_scale = 1,
 	legend_rows = NULL,
 	individual_plots = TRUE,
+	downsample_threshold = 5000,
+	downsample_n = 2000,
 	model_colors = c(
 		"MOBSNVF"     = "#E41A1C", # Crimson Red      
 		"VAFSNVF"     = "#FF7F00", # Standard Orange      
@@ -82,6 +87,48 @@ make_roc_prc_plot <- function(
 		"FFPolish" = 0.6
 	)
 ) {
+
+	# ── LTTB Downsampling (per model) ─────────────────────────────────
+	# Resolve tidy-eval column names to strings for programmatic use
+	x_nm     <- rlang::as_name(rlang::enquo(x_col))
+	y_nm     <- rlang::as_name(rlang::enquo(y_col))
+	model_nm <- rlang::as_name(rlang::enquo(model_col))
+
+	.apply_lttb_per_model <- function(df, coord_label) {
+		models <- unique(df[[model_nm]])
+		result <- lapply(models, function(m) {
+			sub <- df[df[[model_nm]] == m, , drop = FALSE]
+			if (nrow(sub) <= downsample_threshold) return(sub)
+
+			message(
+				sprintf(
+					"[%s] Downsampling '%s' from %d to ~%d points via LTTB",
+					coord_label, m, nrow(sub), downsample_n
+				)
+			)
+
+			# # Sort by x within the model (LTTB requires sorted input)
+			# sub <- sub[order(sub[[x_nm]]), ]
+
+			# LTTB::LTTB expects a 2-column numeric matrix sorted by column 1
+			# and returns a matrix with at most n_bins + 2 rows
+			mat <- data.frame(sub[[x_nm]], sub[[y_nm]])
+			downsampled <- LTTB(mat, n_bins = downsample_n - 2)
+
+			# Match downsampled points back to original rows to preserve all columns
+			# LTTB selects existing points (no interpolation), so exact matching works
+			key_orig <- paste(sub[[x_nm]], sub[[y_nm]], sep = "\t")
+			key_ds   <- paste(downsampled[, 1], downsampled[, 2], sep = "\t")
+			idx      <- match(key_ds, key_orig)
+
+			sub[idx, , drop = FALSE]
+		})
+		do.call(rbind, result)
+	}
+
+	roc_coord <- .apply_lttb_per_model(roc_coord, "ROC")
+	prc_coord <- .apply_lttb_per_model(prc_coord, "PRC")
+	# ───────────────────────────────────────────────────────────────────
 
 	# ROC Plot
 	# Added alpha to the aesthetic mapping
