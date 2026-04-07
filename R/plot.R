@@ -93,11 +93,12 @@ make_roc_prc_plot <- function(
 			title = "ROC",
 			x = "1 - Specificity",
 			y = "Sensitivity",
-			color = "Models"
+			color = "Models",
+			alpha = "Models"
 		) +
 		coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
 		scale_color_manual(values = model_colors) +
-		scale_alpha_manual(values = model_alphas, guide = "none") + # guide="none" keeps legend colors 100% opaque
+		scale_alpha_manual(values = model_alphas) + # guide="none" keeps legend colors 100% opaque
 		theme_minimal() +
 		theme(
 			panel.grid.major = element_blank(),
@@ -124,11 +125,12 @@ make_roc_prc_plot <- function(
 			title = "PRC",
 			x = "Recall",
 			y = "Precision",
-			color = "Models"
+			color = "Models",
+			alpha = "Models"
 		) +
 		coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
 		scale_color_manual(values = model_colors) +
-		scale_alpha_manual(values = model_alphas, guide = "none") + # guide="none" keeps legend colors 100% opaque
+		scale_alpha_manual(values = model_alphas) + # guide="none" keeps legend colors 100% opaque
 		theme_minimal() +
 		theme(
 			panel.grid.major = element_blank(),
@@ -147,7 +149,10 @@ make_roc_prc_plot <- function(
 		)
 
 	if (!is.null(legend_rows)) {
-		legend_guide <- guides(color = guide_legend(nrow = legend_rows))
+		legend_guide <- guides(
+			color = guide_legend(nrow = legend_rows),
+			alpha = guide_legend(nrow = legend_rows)
+		)
 		roc_plot <- roc_plot + legend_guide
 		prc_plot <- prc_plot + legend_guide
 	}
