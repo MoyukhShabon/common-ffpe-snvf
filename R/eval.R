@@ -320,7 +320,7 @@ preprocess_microsec <- function(d, truths=NULL, ct_only=TRUE, msec_filter_col = 
 #' @return [data.frame] with score and truth annotation
 preprocess_gatk_obmm <- function(d, truths=NULL, ct_only=TRUE){
 	### GATK Orientation Bias mixture model makes binary classification. This is casted into scores 0 and 1
-	d$score <- ifelse(grepl("orientation", d$filter), 0, 1)
+	d$score <- d$obmm_prob
 	d <- d[!is.na(d$score), ]
 	if (ct_only){
 		# Keep only C>T variants
