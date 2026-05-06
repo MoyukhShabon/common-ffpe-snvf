@@ -2,6 +2,8 @@ library(vcfR)
 library(dplyr)
 library(tidyr)
 
+source("strand-bias.R")
+
 
 #' Calculate GATK Strand Bias (SB-GATK)
 #'
@@ -143,6 +145,7 @@ read_vcf <- function(vcf_path, sample_name){
 		sob = abs((f1r2_alt - f2r1_alt) / (f1r2_alt + f2r1_alt)),
 		sb_gatk = calc_sb_gatk(sb_ref_fwd, sb_ref_rev, sb_alt_fwd, sb_alt_rev),
 		sb_guo = calc_sb_guo(sb_ref_fwd, sb_ref_rev, sb_alt_fwd, sb_alt_rev),
+		sb_mutect = post_strand_bias(sb_ref_fwd, sb_ref_rev, sb_alt_fwd, sb_alt_rev),
 		fdeamc = case_when(
 			ref == "C" & alt == "T" ~ f1r2_alt / (f1r2_alt + f2r1_alt),
 			ref == "G" & alt == "A" ~ f2r1_alt / (f1r2_alt + f2r1_alt),
