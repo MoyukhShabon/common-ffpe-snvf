@@ -83,7 +83,7 @@ get_baseline_precision <- function(dir, sample_name) {
 		return(df)
 	}
 
-	path <- if (grepl("all-samples", sample_name)) {
+	path <- if (grepl("all-", sample_name) & grepl("-samples", sample_name)) {
 		file.path(dir, "model-scores_truths", paste0(sample_name, "_mobsnvf-scores_truths.tsv"))
 	} else {
 		file.path(dir, "model-scores_truths", sample_name, paste0(sample_name, "_mobsnvf-scores_truths.tsv"))
