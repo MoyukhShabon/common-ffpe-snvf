@@ -105,7 +105,7 @@ get_baseline_precision <- function(dir, sample_name) {
 #' @param y_col (name) | The name of the column to be used for the y-axis. Default: y
 #' @param model_col (name) | The name of the column for color grouping. Default: model
 #' @param base_size (numeric) | Base font size in points; theme_pubr derives all other text sizes from this. Default: 20
-#' @param title_size (numeric) | Font size of the overall (patchwork) plot title. Default: 30
+#' @param (base_size * title_scale) (numeric) | Font size of the overall (patchwork) plot title. Default: 30
 #' @param line_width (numeric) | Width of the ROC/PRC curves. Default: 2
 #' @param subplot_legend_ncol (integer) | Number of legend columns for the standalone ROC / PRC subplots returned in the list. Default: 3
 #' @param combined_legend_ncol (integer) | Number of legend columns for the combined (patchwork) ROC + PRC plot. Applied right before stitching. Default: 4
@@ -126,13 +126,12 @@ make_roc_prc_plot <- function(
 	caption              = NULL,
 	model_col            = model,
 	base_size            = 20,
-	title_size           = 30,
+	title_scale          = 1.5,
+	subtitle_scale       = 1.2,
 	line_width           = 2,
 	subplot_legend_ncol  = 3,
 	combined_legend_ncol = 6,
 	individual_plots     = TRUE,
-	width                = 10,
-	height               = 7,
 	downsample_threshold = 5000,
 	downsample_n         = 2000,
 	model_colors         = MODEL_COLORS,
@@ -268,9 +267,8 @@ make_roc_prc_plot <- function(
 			subtitle = subtitle,
 			caption = caption,
 			theme = theme(
-				plot.title = element_text(
-					size = title_size, face = "bold", hjust = 0.5,
-					margin = margin(t = 10, b = 10)
+				plot.title = element_text(size = (base_size * title_scale), face = "bold", hjust = 0.5, margin = margin(t = 10, b = 10)),
+				plot.subtitle = element_text(size = (base_size * subtitle_scale), hjust = 0.5, margin = margin(b = 10)
 				)
 			)
 		)
