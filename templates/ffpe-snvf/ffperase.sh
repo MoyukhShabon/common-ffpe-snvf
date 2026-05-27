@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "python path:    $(which python3)"
+echo "sklearn version: $(python3 -W ignore -c 'import sklearn; print(sklearn.__version__)')"  # must be 0.24.1
+
 # ---- Workflow path ----
 MAIN_NF="/home/moyukh/storage_dshihlab/repos/nf-ffperase/main.nf"
 MODEL="/home/moyukh/storage_dshihlab/repos/nf-ffperase/trained_models/model.snvs.pkl"
@@ -117,7 +120,7 @@ fi
 # ---- Defaulted output/run paths (derived after sample name is known) ----
 RUN_ID="${SAMPLE_NAME}"
 : "${OUTDIR:=results/${RUN_ID}}"
-: "${RUN_DIR:=runs/${RUN_ID}}"
+: "${RUN_DIR:=nf-runs/${RUN_ID}}"
 : "${WORK_DIR:=nf-work/${RUN_ID}}"
 mkdir -p "${RUN_DIR}"
 
@@ -157,4 +160,3 @@ nextflow \
     --sampleName    "${SAMPLE_NAME}" \
     "${EXTRA_ARGS[@]}"
 
-    
