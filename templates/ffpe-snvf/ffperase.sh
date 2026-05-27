@@ -70,6 +70,15 @@ require_param() {
     [[ -n "${value}" ]] || die "Missing required argument: ${flag}"
 }
 
+# Helper: format seconds as Hh Mm Ss
+format_duration() {
+    local total=$1
+    local h=$(( total / 3600 ))
+    local m=$(( (total % 3600) / 60 ))
+    local s=$(( total % 60 ))
+    printf '%dh%02dm%02ds' "${h}" "${m}" "${s}"
+}
+
 # ---- Parse args ----
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -124,6 +133,9 @@ RUN_ID="${SAMPLE_NAME}"
 : "${WORK_DIR:=nf-work/${RUN_ID}}"
 mkdir -p "${RUN_DIR}"
 
+# ---- Runtime tracking output ----
+RUNTIME_TSV="${OUTDIR}/${SAMPLE_NAME}.runtime.tsv"
+
 # ---- Build optional nextflow args ----
 NF_OPTS=()
 [[ -n "${PROFILE}" ]] && NF_OPTS+=(-profile "${PROFILE}")
@@ -136,7 +148,14 @@ echo "  BAM:     ${BAM}"
 echo "  Outdir:  ${OUTDIR}"
 echo "  Run ID:  ${RUN_ID}"
 [[ -n "${PROFILE}" ]] && echo "  Profile: ${PROFILE}"
+echo "  Runtime log: ${RUNTIME_TSV}"
 
+# ---- Time the nextflow execution ----
+# Capture exit status without tripping `set -e`, so we always write the TSV.
+START_EPOCH=$(date +%s)
+START_ISO=$(date -u -d "@${START_EPOCH}" +"%Y-%m-%dT%H:%M:%SZ")
+
+NF_EXIT=0
 nextflow \
     -log "${RUN_DIR}/nextflow.log" \
     run "${MAIN_NF}" \
@@ -158,5 +177,33 @@ nextflow \
     --modelName     "${MODEL_NAME}" \
     --mutationType  "${MUTATION_TYPE}" \
     --sampleName    "${SAMPLE_NAME}" \
-    "${EXTRA_ARGS[@]}"
+    "${EXTRA_ARGS[@]}" || NF_EXIT=$?
+
+END_EPOCH=$(date +%s)
+END_ISO=$(date -u -d "@${END_EPOCH}" +"%Y-%m-%dT%H:%M:%SZ")
+DURATION_S=$(( END_EPOCH - START_EPOCH ))
+DURATION_H=$(format_duration "${DURATION_S}")
+STATUS=$([[ "${NF_EXIT}" -eq 0 ]] && echo "SUCCESS" || echo "FAILED")
+
+# ---- Write runtime TSV ----
+{
+    printf 'sample_name\tstep\tmutation_type\tprofile\tstart_time_utc\tend_time_utc\tduration_seconds\tduration_human\texit_code\tstatus\n'
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "${SAMPLE_NAME}" \
+        "${STEP}" \
+        "${MUTATION_TYPE}" \
+        "${PROFILE:-none}" \
+        "${START_ISO}" \
+        "${END_ISO}" \
+        "${DURATION_S}" \
+        "${DURATION_H}" \
+        "${NF_EXIT}" \
+        "${STATUS}"
+} > "${RUNTIME_TSV}"
+
+echo
+echo "Runtime: ${DURATION_H} (${DURATION_S}s) [${STATUS}]"
+echo "Wrote: ${RUNTIME_TSV}"
+
+exit "${NF_EXIT}"
 
