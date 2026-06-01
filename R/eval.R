@@ -1,23 +1,22 @@
 #!/usr/bin/env Rscript
 
 # This script contains functions for evaluation
-## This is a work in progress. Some functions cab still be improved
 
 library(io)
 library(precrec)
 library(tidyr)
 
 
-#### A list of Chromosomes 1-22, X and Y
+# A list of Chromosomes 1-22, X and Y
 standard_chromosomes <- paste0("chr", c(1:22, "X", "Y"))
 
 
-#' Read a VCF File
+#' Read variants from a VCF File
 #' @param path [string] The path to the VCF file.
 #' @param columns [vector] of column names to keep in lowercase (optional).
 #' @param split_multiallelic [logical] Splits multiallelic sties into biallelic (optional).
 #' @return [data.frame] Table containing VCF columns
-read_vcf <- function(path, columns = NULL, split_multiallelic = TRUE) {
+read_variants <- function(path, columns = NULL, split_multiallelic = TRUE) {
 	all_lines <- readLines(path)
 	filtered_lines <- grep("^##", all_lines, value = TRUE, invert = TRUE)
 
@@ -54,9 +53,9 @@ ct_filter <- function(d, ref_col = "ref", alt_col = "alt", invert = FALSE) {
 				((d[[ref_col]] == "G") & (d[[alt_col]] == "A"))
 	
 	if (invert){
-		d[!ct_mask,]
+		return(d[!ct_mask,])
 	} else {
-		d[ct_mask,]
+		return(d[ct_mask,])
 	}
 }
 
@@ -66,7 +65,7 @@ ct_filter <- function(d, ref_col = "ref", alt_col = "alt", invert = FALSE) {
 #' @return [data.frame] of variant with ID annotation
 add_id <- function(d) {
 	d$snv <- with(d, paste(chrom, pos, ref, alt, sep="_"))
-	d
+	return(d)
 }
 
 
@@ -77,7 +76,7 @@ add_id <- function(d) {
 #' @return [data.frame] with annotated ground truth label
 annotate_truth <- function(d, truth) {
 	d$truth <- d$snv %in% truth$snv;
-	d
+	return(d)
 }
 
 
@@ -148,7 +147,7 @@ fdr_cut_pred <- function(df, score, fp.cut=0.5) {
 	df <- rbind(df.arti, df.nonarti)
 	# Sort
 	df <- df[order(df$chrom, df$pos), ]
-	df
+	return(df)
 }
 
 ############################
@@ -171,7 +170,7 @@ construct_ground_truth <- function(annot_d, tissue, vcf.dir){
 	paths <- file.path(vcf.dir, samples, sprintf("%s.vcf.gz", samples))
 	truths <- snv_union(paths)
 	truths <- add_id(truths)
-	truths
+	return(truths)
 }
 
 #' Preprocess mobsnvf results
@@ -211,7 +210,7 @@ preprocess_vafsnvf <- function(d, truths=NULL, vcf=NULL) {
 		d <- add_id(d);
 		d <- annotate_truth(d, truths)
 	}
-	d
+	return(d)
 }
 
 #' Preprocess ideafix results
@@ -229,7 +228,7 @@ preprocess_ideafix <- function(d, truths=NULL, vcf=NULL) {
 		d <- add_id(d);
 		d <- annotate_truth(d, truths)
 	}
-	d
+	return(d)
 }
 
 #' Preprocess ffpolish results
@@ -250,7 +249,7 @@ preprocess_ffpolish <- function(d, truths=NULL, vcf=NULL, ct_only=TRUE) {
 		d <- add_id(d);
 		d <- annotate_truth(d, truths)
 	}
-	d
+	return(d)
 }
 
 #' Preprocess SOBDetector results
@@ -287,7 +286,7 @@ preprocess_sobdetector <- function(d, truths=NULL, vcf=NULL, ct_only=TRUE) {
 		d <- add_id(d);
 		d <- annotate_truth(d, truths)
 	}
-	d
+	return(d)
 }
 
 #' Preprocess microsec results
@@ -310,7 +309,7 @@ preprocess_microsec <- function(d, truths=NULL, ct_only=TRUE, msec_filter_col = 
 		d <- add_id(d);
 		d <- annotate_truth(d, truths)
 	}
-	d
+	return(d)
 }
 
 #' Preprocess GATK Orientation Bias Mixture Model results
@@ -319,7 +318,6 @@ preprocess_microsec <- function(d, truths=NULL, ct_only=TRUE, msec_filter_col = 
 #' @param ct_only [logical] keep only C>T variants (default: TRUE)
 #' @return [data.frame] with score and truth annotation
 preprocess_gatk_obmm <- function(d, truths=NULL, ct_only=TRUE){
-	### GATK Orientation Bias mixture model makes binary classification. This is casted into scores 0 and 1
 	d$score <- d$obmm_prob
 	d <- d[!is.na(d$score), ]
 	if (ct_only){
@@ -330,7 +328,29 @@ preprocess_gatk_obmm <- function(d, truths=NULL, ct_only=TRUE){
 		d <- add_id(d);
 		d <- annotate_truth(d, truths)
 	}
-	d
+	return(d)
+}
+
+#' Preprocess FFPErase results
+#' @param d [data.frame] of FFPErase variant annotation
+#' @param truths [data.frame] of ground-truth variants (optional)
+#' @param ct_only [logical] keep only C>T variants (default: TRUE)
+#' @return [data.frame] with score and truth annotation
+preprocess_ffperase <- function(d, truths=NULL, ct_only=TRUE){
+	names(d) <- tolower(names(d))
+	names(d)[names(d) == "chr"] <- "chrom"
+	names(d)[names(d) == "start"] <- "pos"
+	# Score is converted from P_artifact to P_mutation
+	d$score <- 1-d$artifact_raw_predicts
+	d <- d[!is.na(d$score), ]
+	if (ct_only){
+		d <- ct_filter(d)
+	}
+	if (!is.null(truths)){
+		d <- add_id(d);
+		d <- annotate_truth(d, truths)
+	}
+	return(d)
 }
 
 
@@ -339,7 +359,7 @@ preprocess_gatk_obmm <- function(d, truths=NULL, ct_only=TRUE){
 #' 
 #' @param snvf_res [data.frame] containing SNV filter results.
 #' @param model_name [character] specifying the model type. Supported models are:
-#'   "mobsnvf", "vafsnvf", "sobdetector", "gatk-obmm", "ffpolish", or "ideafix".
+#'   "mobsnvf", "vafsnvf", "sobdetector", "gatk-obmm", "ffpolish", "ideafix" or "ffperase".
 #' @param ground_truth [data.frame] Optional. Ground truth data for validation. Default is NULL.
 #' @return [data.frame] Preprocessed SNV filter results in a model-specific format
 preprocess_filter <- function(snvf_res, model_name, ground_truth=NULL) {
@@ -360,6 +380,9 @@ preprocess_filter <- function(snvf_res, model_name, ground_truth=NULL) {
 	}
 	if(grepl("ideafix", model_name)){
 		return(preprocess_ideafix(snvf_res, truths=ground_truth))
+	}
+	if(grepl("ffperase", model_name)){
+		return(preprocess_ffperase(snvf_res, truths=ground_truth))
 	}
 	stop("Unknown model name provided for preprocessing.")
 }
@@ -532,3 +555,5 @@ calc_eval_metrics <- function(df, pred_col = "pred", truth_col = "truth") {
 		specificity = specificity
 	)
 }
+
+

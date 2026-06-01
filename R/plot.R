@@ -25,7 +25,8 @@ MODEL_COLORS <- c(
 	"GATK-OBMM"   = "#FFC020", # Golden Yellow    
 	"SOBDetector" = "#377EB8", # Solid Blue      
 	"Ideafix"     = "#4DAF4A", # Solid Green      
-	"FFPolish"    = "#984EA3"  # Solid Purple    
+	"FFPolish"    = "#984EA3",  # Solid Purple
+	"FFPErase"    = "#a04300" # Solid Brown
 )
 # High opacity for MOBSNVF and reference VAFSNVF, lower for others
 MODEL_ALPHAS <- c(
@@ -35,7 +36,8 @@ MODEL_ALPHAS <- c(
 	"SOBDetector" = 0.6,
 	"MicroSEC" = 0.6,
 	"Ideafix" = 0.6,
-	"FFPolish" = 0.6
+	"FFPolish" = 0.6,
+	"FFPErase" = 0.6
 )
 
 #' Function to check if the roc and prc coordinate table is from the same sample and returns sample name if they match
@@ -131,8 +133,6 @@ make_roc_prc_plot <- function(
 	subplot_legend_ncol  = 3,
 	combined_legend_ncol = 6,
 	individual_plots     = TRUE,
-	width                = 10,
-	height               = 7,
 	downsample_threshold = 5000,
 	downsample_n         = 2000,
 	model_colors         = MODEL_COLORS,
@@ -213,8 +213,8 @@ make_roc_prc_plot <- function(
 		labs(
 			title = title, 
 			subtitle = "ROC", 
-			x = "FPR (1 - Specificity)", 
-			y = "TPR (Sensitivity)"
+			x = "False positive rate", 
+			y = "True positive rate"
 		)
 
 	# PRC Plot (uses subplot legend layout)

@@ -293,13 +293,13 @@ extract_ad <- function(vcf, sample_name, annotate_vaf=FALSE) {
 #' @param sample_name (string) Name to assign to the sample/column in the output.
 #'
 #' @return (data.frame) Columns:
-#'   chrom, pos, ref, alt, filter,
-#'   ad_ref, ad_alt, f1r2_ref, f1r2_alt, f2r1_ref, f2r1_alt,
-#'   vaf, sob, sample_name
+#'   chrom, pos, ref, alt, ad_ref, ad_alt 
+#'   Additionally if extra_annot is TRUE:
+#'   filter, vaf, depth, sample_name
 #'
 #' @examples
 #' # read_vcf("sample.vcf", "sample1")
-read_vcf <- function(vcf_path, sample_name){
+read_vcf <- function(vcf_path, sample_name, extra_annot = TRUE){
 
 	vcf0 <- read.vcfR(vcf_path, verbose = FALSE)
 	vcf1 <- data.frame(
@@ -308,16 +308,11 @@ read_vcf <- function(vcf_path, sample_name){
 		ref = getREF(vcf0),
 		alt = getALT(vcf0),
 		filter = getFILTER(vcf0),
-		ad = as.vector(extract.gt(vcf0, element = "AD")[, sample_name]),
-		f1r1 = as.vector(extract.gt(vcf0, element = "F1R2")[, sample_name]),
-		f2r1 = as.vector(extract.gt(vcf0, element = "F2R1")[, sample_name]),
-		dp = as.vector(extract.gt(vcf0, element = "DP")[, sample_name])
+		ad = as.vector(extract.gt(vcf0, element = "AD")[, sample_name])
 	)
 
 	# Split AD, F1R2, and F2R1 fields into ref and alt
 	vcf1 <- separate(vcf1, ad, into = c("ad_ref", "ad_alt"), sep=",", extra="merge", convert = TRUE)
-	vcf1 <- separate(vcf1, f1r1, into = c("f1r2_ref", "f1r2_alt"), sep=",", extra="merge", convert = TRUE)
-	vcf1 <- separate(vcf1, f2r1, into = c("f2r1_ref", "f2r1_alt"), sep=",", extra="merge", convert = TRUE)
 
 	# Split multiallelic sites to biallelic
 	vcf1 <- separate_rows(vcf1, alt, ad_alt, f1r2_alt, f2r1_alt, sep = ",")
@@ -326,23 +321,18 @@ read_vcf <- function(vcf_path, sample_name){
 	vcf1 <- mutate(
 		vcf1,
 		ad_ref = as.numeric(ad_ref),
-		ad_alt = as.numeric(ad_alt),
-		f1r2_ref = as.numeric(f1r2_ref),
-		f1r2_alt = as.numeric(f1r2_alt),
-		f2r1_ref = as.numeric(f2r1_ref),
-		f2r1_alt = as.numeric(f2r1_alt),
-		dp = as.numeric(dp)
+		ad_alt = as.numeric(ad_alt)
 	)
 
-	vcf1$vaf <- with(vcf1, ad_alt/(ad_ref + ad_alt))
-	vcf1$sob <- with(vcf1, abs((f1r2_alt - f2r1_alt)/(f1r2_alt + f2r1_alt)))
-	# # Some variants may have a SOB score of NaN as both F1R2_alt and F2R1_alt are 0.
-	# # This is likey due to the variant being called from reads with missing mates
-
-	vcf1$sample_name <- sample_name
+	if (extra_annot){
+		vcf1$vaf <- with(vcf1, ad_alt/(ad_ref + ad_alt))
+		vcf1$depth <- with(vcf1, ad_ref + ad_alt)
+		vcf1$sample_name <- sample_name
+	} else {
+		vcf$filter <- NULL
+	}
 
 	return(vcf1)
-
 }
 
 #' Extract Allelic Depth (count of reads supporting ref and alt allele)
