@@ -214,8 +214,8 @@ make_roc_prc_plot <- function(
 		labs(
 			title = title, 
 			subtitle = "ROC", 
-			x = "FPR (1 - Specificity)", 
-			y = "TPR (Sensitivity)"
+			x = "False positive rate", 
+			y = "True positive rate"
 		)
 
 	# PRC Plot (uses subplot legend layout)
