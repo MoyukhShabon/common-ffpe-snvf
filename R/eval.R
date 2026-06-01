@@ -11,12 +11,12 @@ library(tidyr)
 standard_chromosomes <- paste0("chr", c(1:22, "X", "Y"))
 
 
-#' Read a VCF File
+#' Read variants from a VCF File
 #' @param path [string] The path to the VCF file.
 #' @param columns [vector] of column names to keep in lowercase (optional).
 #' @param split_multiallelic [logical] Splits multiallelic sties into biallelic (optional).
 #' @return [data.frame] Table containing VCF columns
-read_vcf <- function(path, columns = NULL, split_multiallelic = TRUE) {
+read_variants <- function(path, columns = NULL, split_multiallelic = TRUE) {
 	all_lines <- readLines(path)
 	filtered_lines <- grep("^##", all_lines, value = TRUE, invert = TRUE)
 
