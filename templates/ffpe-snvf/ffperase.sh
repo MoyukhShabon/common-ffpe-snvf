@@ -133,6 +133,10 @@ RUN_ID="${SAMPLE_NAME}"
 : "${WORK_DIR:=nf-work/${RUN_ID}}"
 mkdir -p "${RUN_DIR}"
 
+# ---- Isolate Nextflow's .nextflow metadata (history/cache) per sample ----
+export NXF_CACHE_DIR="$(readlink -f "${RUN_DIR}")/.nextflow"
+mkdir -p "${NXF_CACHE_DIR}"
+
 # ---- Runtime tracking output ----
 RUNTIME_TSV="${OUTDIR}/${SAMPLE_NAME}.runtime.tsv"
 
