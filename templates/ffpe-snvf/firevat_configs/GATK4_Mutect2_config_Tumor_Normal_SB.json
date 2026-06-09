@@ -3,7 +3,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$10",
+            "column_header": "$11",
             "key": "AD",
             "index": 1
         },
@@ -17,7 +17,7 @@
         "direction": "NEG",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$10",
+            "column_header": "$11",
             "key": "AD",
             "index": 2
         },
@@ -31,7 +31,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "AD",
             "index": 1
         },
@@ -45,7 +45,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "AD",
             "index": 2
         },
@@ -59,7 +59,7 @@
         "direction": "NEG",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$10",
+            "column_header": "$11",
             "key": "AF",
             "index": 1
         },
@@ -73,7 +73,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "AF",
             "index": 1
         },
@@ -135,7 +135,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "F1R2",
             "index": 1
         },
@@ -146,7 +146,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "F2R1",
             "index": 1
         },
@@ -157,7 +157,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "F1R2",
             "index": 2
         },
@@ -168,7 +168,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "F2R1",
             "index": 2
         },
@@ -179,7 +179,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "SB",
             "index": 1
         },
@@ -190,7 +190,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "SB",
             "index": 2
         },
@@ -201,7 +201,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "SB",
             "index": 3
         },
@@ -212,7 +212,7 @@
         "direction": "POS",
         "field": {
             "field_type": "FORMAT",
-            "column_header": "$11",
+            "column_header": "$10",
             "key": "SB",
             "index": 4
         },
