@@ -353,6 +353,23 @@ preprocess_ffperase <- function(d, truths=NULL, ct_only=TRUE){
 	return(d)
 }
 
+#' Preprocess FIREVAT results
+#' @param d [data.frame] of FIREVAT variant annotation
+#' @param truths [data.frame] of ground-truth variants (optional)
+#' @param ct_only [logical] keep only C>T variants (default: TRUE)
+#' @return [data.frame] with score and truth annotation
+preprocess_firevat <- function(d, truths=NULL, ct_only=TRUE){
+	names(d)[names(d) == "score_firevat"] <- "score"
+	if (ct_only){
+		d <- ct_filter(d)
+	}
+	if (!is.null(truths)){
+		d <- add_id(d);
+		d <- annotate_truth(d, truths)
+	}
+	return(d)
+}
+
 
 #' Preprocess SNV Filter Results
 #' Routes SNV filter results to the appropriate preprocessing function based on the model name.
@@ -383,6 +400,9 @@ preprocess_filter <- function(snvf_res, model_name, ground_truth=NULL) {
 	}
 	if(grepl("ffperase", model_name)){
 		return(preprocess_ffperase(snvf_res, truths=ground_truth))
+	}
+	if(grepl("firevat", model_name)){
+		return(preprocess_firevat(snvf_res, truths=ground_truth))
 	}
 	stop("Unknown model name provided for preprocessing.")
 }

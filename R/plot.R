@@ -26,7 +26,8 @@ MODEL_COLORS <- c(
 	"SOBDetector" = "#377EB8", # Solid Blue      
 	"Ideafix"     = "#4DAF4A", # Solid Green      
 	"FFPolish"    = "#984EA3",  # Solid Purple
-	"FFPErase"    = "#a04300" # Solid Brown
+	"FFPErase"    = "#a04300", # Solid Brown
+	"FIREVAT"     = "#b8266f"
 )
 # High opacity for MOBSNVF and reference VAFSNVF, lower for others
 MODEL_ALPHAS <- c(
@@ -37,7 +38,8 @@ MODEL_ALPHAS <- c(
 	"MicroSEC" = 0.6,
 	"Ideafix" = 0.6,
 	"FFPolish" = 0.6,
-	"FFPErase" = 0.6
+	"FFPErase" = 0.6,
+	"FIREVAT" = 0.6
 )
 
 #' Function to check if the roc and prc coordinate table is from the same sample and returns sample name if they match
