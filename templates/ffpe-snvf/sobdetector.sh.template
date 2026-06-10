@@ -36,6 +36,32 @@ snv=${outdir}/${sample_name}.input.snv
 printf 'chrom\tpos\tref\talt\n' > $snv
 bcftools norm -m - $vcf | bcftools view | grep -v "#" | cut -f 1,2,4,5 >> $snv
 
+# ---- Time the SOBDetector execution ----
+# Capture exit status without tripping `set -e`, so we always write the TSV.
+START_EPOCH=$(date +%s)
+START_ISO=$(date -u -d "@${START_EPOCH}" +"%Y-%m-%dT%H:%M:%SZ")
+
 # SOBDetector inserts an extra TAB character after first 4 columns
 java -jar $jar --input-type Table --input-variants $snv --input-bam $bam --output-variants $outdir/${sample_name}.sobdetector.snv &&
 sed -i 's/\t\t/\t/g' $outdir/${sample_name}.sobdetector.snv
+
+END_EPOCH=$(date +%s)
+END_ISO=$(date -u -d "@${END_EPOCH}" +"%Y-%m-%dT%H:%M:%SZ")
+DURATION_S=$(( END_EPOCH - START_EPOCH ))
+DURATION_H=$(format_duration "${DURATION_S}")
+
+# ---- Write runtime TSV ----
+RUNTIME_TSV="${outdir}/${sample_name}.runtime.tsv"
+{
+    printf 'sample_name\tstart_time_utc\tend_time_utc\tduration_seconds\tduration_human\n'
+    printf '%s\t%s\t%s\t%s\t%s\n' \
+        "${sample_name}" \
+        "${START_ISO}" \
+        "${END_ISO}" \
+        "${DURATION_S}" \
+        "${DURATION_H}"
+} > "${RUNTIME_TSV}"
+
+echo
+echo "Runtime: ${DURATION_H} (${DURATION_S}s)"
+echo "Wrote: ${RUNTIME_TSV}"

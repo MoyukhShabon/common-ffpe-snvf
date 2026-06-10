@@ -10,6 +10,15 @@ mkdir -p $outdir
 
 ref=$4
 
+# Helper: format seconds as Hh Mm Ss
+format_duration() {
+    local total=$1
+    local h=$(( total / 3600 ))
+    local m=$(( (total % 3600) / 60 ))
+    local s=$(( total % 60 ))
+    printf '%dh%02dm%02ds' "${h}" "${m}" "${s}"
+}
+
 vcf_name=$(basename $vcf_path)
 sample_name=${vcf_name%%.*}
 
@@ -33,6 +42,11 @@ snv=${outdir}/${sample_name}.input.snv
 printf 'chrom\tpos\tref\talt\n' > $snv
 bcftools norm -m - $vcf | bcftools view | grep -v "#" | cut -f 1,2,4,5 >> $snv
 
+# ---- Time the MOBSNVF execution ----
+# Capture exit status without tripping `set -e`, so we always write the TSV.
+START_EPOCH=$(date +%s)
+START_ISO=$(date -u -d "@${START_EPOCH}" +"%Y-%m-%dT%H:%M:%SZ")
+
 hts-mobsnvf quantify -M freq -t ffpe -f $ref -b $bam -J $outdir/${sample_name}.obquant.json
 phi=$(grep phi $outdir/${sample_name}.obquant.json | sed -E 's/.*"phi":.([0-9.e+-]+),?/\1/')
 
@@ -48,3 +62,24 @@ fi
 
 echo "Finished FFPE SNVF Filtering"
 echo -e "\tOutput saved to: $outdir/${sample_name}.mobsnvf.snv"
+
+END_EPOCH=$(date +%s)
+END_ISO=$(date -u -d "@${END_EPOCH}" +"%Y-%m-%dT%H:%M:%SZ")
+DURATION_S=$(( END_EPOCH - START_EPOCH ))
+DURATION_H=$(format_duration "${DURATION_S}")
+
+# ---- Write runtime TSV ----
+RUNTIME_TSV="${outdir}/${sample_name}.runtime.tsv"
+{
+    printf 'sample_name\tstart_time_utc\tend_time_utc\tduration_seconds\tduration_human\n'
+    printf '%s\t%s\t%s\t%s\t%s\n' \
+        "${sample_name}" \
+        "${START_ISO}" \
+        "${END_ISO}" \
+        "${DURATION_S}" \
+        "${DURATION_H}"
+} > "${RUNTIME_TSV}"
+
+echo
+echo "Runtime: ${DURATION_H} (${DURATION_S}s)"
+echo "Wrote: ${RUNTIME_TSV}"
